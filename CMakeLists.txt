@@ -45,4 +45,9 @@ target_link_libraries(${PROJECT_NAME}
 	PRIVATE Support
 )
 
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    target_compile_options(${PROJECT_NAME} PUBLIC -stdlib=libc++)
+    target_link_libraries(${PROJECT_NAME} PRIVATE c++abi -stdlib=libc++)
+endif()
+
 add_subdirectory(examples)
