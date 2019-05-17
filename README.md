@@ -1,24 +1,25 @@
-#Couhbase-lite-cpp library
+# Couhbase-lite-cpp library
 This library depends on couchbase-lite-core. 
 
 Note: This is tested on Mac OS, Windows, and Unix (Ubuntu, CentOS).
 
-#Build
+# Build
 ```git submodule update --init --recursive```
 - MacOS, Linux
 ```
 mkdir build && cd build
 cmake ..
-make
+make -j4
 ```
 - Windows
 ```
-mkdir build && cd build
-cmake .. -G"Visual Studio 2017 Win64"
+mkdir build
+cd build
+cmake .. -G"Visual Studio 15 2017 Win64"
 msbuild couchbase-lite-cpp.sln /p:Configuration=RelWithDebInfo
 ```
 
-#Examples
+# Examples
 Run the example demos from ./build/examples
 ```
 ./fleece-playground
@@ -29,7 +30,7 @@ DB location will be inside build/db/${dbname}/db.sqlite3.
 The db can be viewed using sqlitebrowser.
 
 
-#Couchbase backend technologies
+# Couchbase backend technologies
 - Install Couchbase server from `https://www.couchbase.com/downloads`. 
 This library was tested with Couchbase version `5.5.1`
 - Install Sync Gateway 2.1.1 from the above link
@@ -60,6 +61,6 @@ This library was tested with Couchbase version `5.5.1`
 }
 ```
 
-#TODO:
+# TODO:
 1. Tests.
 2. Logging.
