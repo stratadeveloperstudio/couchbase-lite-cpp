@@ -42,6 +42,7 @@ namespace Spyglass {
 
     enum class SGReplicatorReturnStatus {
         kNoError,
+        kStillRunning,
         kConfigurationError,
         kInternalError,
     };

@@ -75,14 +75,12 @@ namespace Spyglass {
     SGReplicatorReturnStatus SGReplicator::start() {
         lock_guard<mutex> lock(replicator_lock_);
 
+        if(c4replicator_ != nullptr){
+            return SGReplicatorReturnStatus::kStillRunning;
+        }
 
         if (!isValidSGReplicatorConfiguration()) {
             return SGReplicatorReturnStatus::kConfigurationError;
-        }
-
-        if(c4replicator_ != nullptr){
-            c4repl_stop(c4replicator_);
-            c4repl_free(c4replicator_);
         }
 
         Encoder encoder;
@@ -145,15 +143,23 @@ namespace Spyglass {
     void SGReplicator::addChangeListener(
             const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> &callback) {
         on_status_changed_callback_ = callback;
-        replicator_parameters_.onStatusChanged = [](C4Replicator *, C4ReplicatorStatus replicator_status,
+        replicator_parameters_.onStatusChanged = [](C4Replicator *replicator, C4ReplicatorStatus replicator_status,
                                                     void *context) {
-            DEBUG("onStatusChanged\n");
+            DEBUG("onStatusChanged: %d\n", replicator_status.level);
             SGReplicatorProgress progress;
             progress.total = replicator_status.progress.unitsTotal;
             progress.completed = replicator_status.progress.unitsCompleted;
             progress.document_count = replicator_status.progress.documentCount;
-            ((SGReplicator *) context)->on_status_changed_callback_(
-                    (SGReplicator::ActivityLevel) replicator_status.level, progress);
+            ((SGReplicator *) context)->on_status_changed_callback_((SGReplicator::ActivityLevel) replicator_status.level, progress);
+
+            SGReplicator *ref = ((SGReplicator *) context);
+            if(ref && replicator){
+              lock_guard<mutex> lock(ref->replicator_lock_);
+              if(replicator_status.level == kC4Stopped){
+                c4repl_free(ref->c4replicator_);
+                ref->c4replicator_ = nullptr;
+              }
+            }
         };
     }
 
