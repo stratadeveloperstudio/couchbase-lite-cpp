@@ -29,7 +29,7 @@
 #include <future>
 #include <thread>
 
-#include <c4.h>
+#include <litecore/c4.h>
 
 #include "SGDatabase.h"
 #include "SGReplicatorConfiguration.h"

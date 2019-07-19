@@ -23,7 +23,7 @@
 //  limitations under the License.
 
 #include "SGUtility.h"
-#include <FleeceImpl.hh>
+#include <fleece/FleeceImpl.hh>
 namespace Spyglass{
 
     void logC4Error(const C4Error &err){

@@ -28,8 +28,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include <c4.h>
-#include <FleeceImpl.hh>
+#include <litecore/c4.h>
+#include <fleece/FleeceImpl.hh>
 #include "SGDocument.h"
 
 namespace Spyglass {

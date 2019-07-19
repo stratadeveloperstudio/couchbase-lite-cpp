@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(couchbase-lite-cpp
+project(CouhbaseLiteCPP
         LANGUAGES CXX
+        VERSION 1.0
 )
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,12 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FeatureSummary)
 
-option(BUILD_EXAMPLES "Build project examples" OFF)
+option(BUILD_EXAMPLES "Build project examples" ON)
 add_feature_info(BUILD_EXAMPLES BUILD_EXAMPLES "Build project examples")
 
 add_subdirectory(vendor)
 
-set(CB_DIR "vendor/couchbase-lite-core")
+set(CB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/couchbase-lite-core")
 
 add_library(${PROJECT_NAME}
     src/SGDatabase.cpp
@@ -24,24 +25,12 @@ add_library(${PROJECT_NAME}
     src/SGURLEndpoint.cpp
     src/SGBasicAuthenticator.cpp
     src/SGUtility.cpp
-    #HACK: This is not included in couchbase-lite-core. But, we need it for the replicator
-    ${CB_DIR}/Replicator/CivetWebSocket.cc
 )
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC "include"
-
-    # FIXME: update couchbase-lite-cpp include paths with respect to CMake imported target!!
-    PUBLIC "${CB_DIR}/C/include"
-    PUBLIC "${CB_DIR}/vendor/fleece/API"
-    PUBLIC "${CB_DIR}/vendor/fleece/Fleece/Core"
-    PUBLIC "${CB_DIR}/vendor/fleece/Fleece/Mutable"
-    PUBLIC "${CB_DIR}/vendor/fleece/Fleece/Support"
-    PRIVATE "${CB_DIR}/Replicator"
-    PRIVATE "${CB_DIR}/LiteCore/Support"
-    PRIVATE "${CB_DIR}/vendor/BLIP-Cpp/include/blip_cpp"
-    PRIVATE "${CB_DIR}/vendor/BLIP-Cpp/src/util"
-    PRIVATE "${CB_DIR}/vendor/civetweb/include"
+     PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -71,3 +60,27 @@ endif()
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}
+    LIBRARY DESTINATION lib ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION lib ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION bin ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION include ${CMAKE_INSTALL_INCLUDEDIR}
+)
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${PROJECT_NAME}ConfigVersion.cmake"
+    VERSION ${PACKAGE_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+install(EXPORT ${PROJECT_NAME}
+    FILE "${PROJECT_NAME}Targets.cmake"
+    NAMESPACE strata::
+    DESTINATION lib/cmake/${PROJECT_NAME}
+)
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+    DESTINATION include/couchbaselitecpp
+    FILES_MATCHING PATTERN "*.h*"
+)

@@ -23,7 +23,7 @@
 //  limitations under the License.
 
 #include "SGURLEndpoint.h"
-#include <FleeceImpl.hh>
+#include <fleece/FleeceImpl.hh>
 using namespace std;
 using namespace fleece;
 #define DEBUG(...) printf("SGURLEndpoint: "); printf(__VA_ARGS__)

@@ -26,11 +26,11 @@
 
 #include "SGDatabase.h"
 
-#include <FleeceImpl.hh>
-#include <MutableArray.hh>
-#include <MutableDict.hh>
-#include <Doc.hh>
-#include <c4Document+Fleece.h>
+#include <fleece/FleeceImpl.hh>
+#include <fleece/MutableArray.hh>
+#include <fleece/MutableDict.hh>
+#include <fleece/Doc.hh>
+#include <litecore/c4Document+Fleece.h>
 
 #include "SGDocument.h"
 #include "SGUtility.h"

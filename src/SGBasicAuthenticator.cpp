@@ -23,7 +23,7 @@
 //  limitations under the License.
 
 #include "SGAuthenticator.h"
-#include <c4Replicator.h>
+#include <litecore/c4Replicator.h>
 using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGBasicAuthenticator: "); printf(__VA_ARGS__)
