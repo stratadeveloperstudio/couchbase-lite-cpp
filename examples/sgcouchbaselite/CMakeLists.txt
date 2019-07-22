@@ -18,7 +18,7 @@ endif()
 add_executable(${PROJECT_NAME} sgcouchbaselite.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    couchbase-lite-cpp
+    CouhbaseLiteCPP
 )
 
 if(APPLE)
