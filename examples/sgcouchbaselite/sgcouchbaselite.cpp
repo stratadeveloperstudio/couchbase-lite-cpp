@@ -110,11 +110,23 @@ int main(){
     }
 
     // This is a valid json.
-    std::string json_data = R"foo({"name":"person","age":100,"myobj":{"mykey":"myvalue","myarray":[1,2,3,4]} })foo";
+    std::string json_data = R"foo({"age":100,"myobj":{"myarray":[1,2,3,4],"mykey":"myvalue"},"name":"luay"})foo";
     if( newdoc.setBody(json_data) ){
         DEBUG("json_data is a valid json\n");
     }
 
+    if(sgDatabase.save(&newdoc) != SGDatabaseReturnStatus::kNoError){
+        DEBUG("Could not save a doc after using setBody()\n");
+        return 1;
+    }
+
+    DEBUG("%s\n", newdoc.getBody().c_str());
+
+    if(json_data.compare(newdoc.getBody()) != 0){
+        DEBUG("Doc body does not match the original json string used to set the body\n");
+        return 1;
+    }
+    
     SGMutableDocument usbPDDocument(&sgDatabase, "usb-pd-document");
 
 

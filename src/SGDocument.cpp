@@ -53,6 +53,15 @@ namespace Spyglass {
         return c4document_ != nullptr;
     }
 
+    std::string SGDocument::getRevision()
+    {
+        if (c4document_ == nullptr) {
+            return std::string();
+        }
+
+        return fleece::slice(c4document_->revID).asString();
+    }
+    
     const std::string SGDocument::getBody() const {
         return mutable_dict_->asDict()->toJSONString();
     }

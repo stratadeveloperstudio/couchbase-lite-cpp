@@ -76,6 +76,8 @@ namespace Spyglass {
         */
         bool exist() const;
 
+        std::string getRevision();        
+
     private:
         C4Database *c4db_{nullptr};
         C4Document *c4document_{nullptr};
