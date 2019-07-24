@@ -27,7 +27,7 @@
 
 #include <string>
 
-#include <c4.h>
+#include <litecore/c4.h>
 
 namespace Spyglass {
     class SGURLEndpoint {

@@ -43,6 +43,9 @@ namespace Spyglass {
         * @param body The reference to the string json format.
         */
         bool setBody(const std::string &body);
+
+    private:
+        fleece::alloc_slice alloc_slice_;
     };
 }
 #endif //SGMUTABLEDOCUMENT_H

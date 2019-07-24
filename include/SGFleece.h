@@ -25,10 +25,10 @@
 #ifndef SGFLEECE_H
 #define SGFLEECE_H
 
-#include <FleeceImpl.hh>
-#include <MutableArray.hh>
-#include <MutableDict.hh>
-#include <Doc.hh>
-#include <JSONDelta.hh>
+#include <fleece/FleeceImpl.hh>
+#include <fleece/MutableArray.hh>
+#include <fleece/MutableDict.hh>
+#include <fleece/Doc.hh>
+#include <fleece/JSONDelta.hh>
 
 #endif //SGFLEECE_H

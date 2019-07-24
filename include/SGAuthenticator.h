@@ -26,9 +26,9 @@
 #define SGAUTHENTICATOR_H
 
 #include <string>
-#include <FleeceImpl.hh>
-#include <MutableArray.hh>
-#include <MutableDict.hh>
+#include <fleece/FleeceImpl.hh>
+#include <fleece/MutableArray.hh>
+#include <fleece/MutableDict.hh>
 
 namespace Spyglass {
     class SGAuthenticator {

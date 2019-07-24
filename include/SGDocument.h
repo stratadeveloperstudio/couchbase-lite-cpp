@@ -27,10 +27,10 @@
 
 #include <string>
 #include "SGDatabase.h"
-#include <c4Document+Fleece.h>
-#include <FleeceImpl.hh>
-#include <MutableArray.hh>
-#include <MutableDict.hh>
+#include <litecore/c4Document+Fleece.h>
+#include <fleece/FleeceImpl.hh>
+#include <fleece/MutableArray.hh>
+#include <fleece/MutableDict.hh>
 
 namespace Spyglass {
     // Forward declaration is required due to the circular include for SGDatabase<->SGDocument.
@@ -75,6 +75,8 @@ namespace Spyglass {
         * @brief Check if the document exist in the DB.
         */
         bool exist() const;
+
+        std::string getRevision();        
 
     private:
         C4Database *c4db_{nullptr};

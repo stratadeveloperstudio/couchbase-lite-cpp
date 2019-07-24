@@ -15,8 +15,8 @@ make -j4
 ```
 mkdir build
 cd build
-cmake .. -G"Visual Studio 15 2017 Win64"
-msbuild couchbase-lite-cpp.sln /p:Configuration=RelWithDebInfo
+cmake .. -G"NMake Makefiles" -DCMAKE_BUILD_TYPE="DEBUG"
+nmake
 ```
 
 # Examples

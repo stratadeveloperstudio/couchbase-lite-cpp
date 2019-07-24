@@ -29,7 +29,7 @@
 #include <future>
 #include <thread>
 
-#include <c4.h>
+#include <litecore/c4.h>
 
 #include "SGDatabase.h"
 #include "SGReplicatorConfiguration.h"
@@ -42,8 +42,10 @@ namespace Spyglass {
 
     enum class SGReplicatorReturnStatus {
         kNoError,
+        kStillRunning,
         kConfigurationError,
         kInternalError,
+        kAboutToStop, // Asked to stop the replicator while it's running.
     };
     /*
      * Warning: This object can be initialized only once in the program life cycle. See constructor for more information.
@@ -121,6 +123,10 @@ namespace Spyglass {
         void setReplicatorType(SGReplicatorConfiguration::ReplicatorType replicator_type);
 
         bool isValidSGReplicatorConfiguration();
+
+        // c4repl_stop is async and we need to track it so we don't endup with running another replicator.
+        // When Activity status changed to stopped then we can free the replicatior.
+        bool told_to_stop_ {false};
     };
 }
 
