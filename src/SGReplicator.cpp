@@ -68,12 +68,17 @@ namespace Spyglass {
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
         if(c4replicator_ != nullptr){
+            told_to_stop_ = true;
             c4repl_stop(c4replicator_);
         }
     }
 
     SGReplicatorReturnStatus SGReplicator::start() {
         lock_guard<mutex> lock(replicator_lock_);
+
+        if(told_to_stop_){
+            return SGReplicatorReturnStatus::kAboutToStop;
+        }
 
         if(c4replicator_ != nullptr){
             return SGReplicatorReturnStatus::kStillRunning;
@@ -158,6 +163,7 @@ namespace Spyglass {
               if(replicator_status.level == kC4Stopped){
                 c4repl_free(ref->c4replicator_);
                 ref->c4replicator_ = nullptr;
+                ref->told_to_stop_ = false;
               }
             }
         };
