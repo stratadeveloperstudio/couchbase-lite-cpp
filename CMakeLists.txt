@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(CouhbaseLiteCPP
+project(CouchbaseLiteCPP
         LANGUAGES CXX
         VERSION 1.0
 )
@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME}
     src/SGURLEndpoint.cpp
     src/SGBasicAuthenticator.cpp
     src/SGUtility.cpp
+    src/SGPath.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

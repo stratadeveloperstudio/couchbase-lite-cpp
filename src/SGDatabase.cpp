@@ -34,6 +34,7 @@
 
 #include "SGDocument.h"
 #include "SGUtility.h"
+#include "SGPath.h"
 
 using namespace std;
 using namespace fleece;
@@ -80,15 +81,19 @@ namespace Spyglass {
             DEBUG("DB name can't be empty! \n");
             return SGDatabaseReturnStatus::kDBNameError;
         }
-        /*
-            Make a db folder to store all future databases
-            Use a system call as experimental::filesystem wouldn't compile with clang
-            System call will work with Windows/Mac/Linux
-        */
-        // System returns the processor exit status. In this case mkdir return 0 on success.
-        //TODO: Replace system call to make a directory using standard C/C++ API
-        string command = string("mkdir ") + getDBPath() + kSGDatabasesDirectory_;
-        system(command.c_str());
+
+        SGPath path(db_path_);
+
+        if( !path.isValidDir() ){
+            DEBUG("Not valid path!\n");
+            return SGDatabaseReturnStatus::kInvalidDBPath;
+        }
+
+        path.addChildDir(kSGDatabasesDirectory_);
+        if(!path.mkdir()){
+            DEBUG("Failed to create databases dir\n");
+            return SGDatabaseReturnStatus::kCreateDBDirectoryError;
+        }
 
         // Configure database attributes
         // This is the default DB configuration taken from the Java bindings
@@ -97,13 +102,14 @@ namespace Spyglass {
         c4db_config_.versioning = kC4RevisionTrees;
         c4db_config_.encryptionKey.algorithm = kC4EncryptionNone;
 
-        string db_path = getDBPath() + string(kSGDatabasesDirectory_) + string("/") + db_name_;
-        
-        c4db_ = c4db_open(slice(db_path), &c4db_config_, &c4error_);
+        path.addChildDir(db_name_);
+        DEBUG("Full db path: %s\n", path.getPath().c_str());
+
+        c4db_ = c4db_open(slice(path.getPath()), &c4db_config_, &c4error_);
 
         if(c4db_ == nullptr){
             logC4Error(c4error_);
-            DEBUG("Error opening the db: %s.\n", db_path.c_str());
+            DEBUG("Error opening the db: %s\n", path.getPath().c_str());
             return SGDatabaseReturnStatus::kOpenDBError;
         }
 

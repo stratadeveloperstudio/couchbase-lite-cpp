@@ -37,6 +37,7 @@ if(NOT WIN32)
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/C/include <INSTALL_DIR>/include/litecore
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/Replicator <INSTALL_DIR>/include/litecore
+        COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/LiteCore/Support <INSTALL_DIR>/include/litecore
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/vendor/fleece/API/fleece <INSTALL_DIR>/include/fleece
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/vendor/fleece/Fleece/Core <INSTALL_DIR>/include/fleece
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/vendor/fleece/Fleece/Mutable <INSTALL_DIR>/include/fleece
@@ -71,6 +72,7 @@ else()
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/C/include <INSTALL_DIR>/include/litecore
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/Replicator <INSTALL_DIR>/include/litecore
+        COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/LiteCore/Support <INSTALL_DIR>/include/litecore
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/vendor/fleece/API/fleece <INSTALL_DIR>/include/fleece
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/vendor/fleece/Fleece/Core <INSTALL_DIR>/include/fleece
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/vendor/fleece/Fleece/Mutable <INSTALL_DIR>/include/fleece
@@ -116,6 +118,7 @@ add_dependencies(cblitecore::BLIP DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cbliteco
 add_library(cblitecore::support STATIC IMPORTED GLOBAL)
 set_target_properties(cblitecore::support PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/3rd_party/include"
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/3rd_party/include/fleece"
     IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/3rd_party/lib/${CMAKE_STATIC_LIBRARY_PREFIX}Support${CMAKE_STATIC_LIBRARY_SUFFIX}"
 )
 add_dependencies(cblitecore::support DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
