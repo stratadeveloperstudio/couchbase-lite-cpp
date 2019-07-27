@@ -7,5 +7,5 @@ set(CMAKE_CXX_STANDARD 11)
 add_executable(${PROJECT_NAME} fleece.cpp)
 
 target_link_libraries(${PROJECT_NAME}
-    CouhbaseLiteCPP
+    CouchbaseLiteCPP
 )
