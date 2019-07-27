@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME}
     src/SGURLEndpoint.cpp
     src/SGBasicAuthenticator.cpp
     src/SGUtility.cpp
+    src/SGPath.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

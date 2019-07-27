@@ -46,6 +46,7 @@ namespace Spyglass {
         kEndTransactionError,
         kDBNameError,
         kCreateDBDirectoryError,
+        kInvalidDBPath, // Invalid or non existing path
         kDeleteDocumentError,
         kInvalidArgumentError,
         kInvalidDocBody
