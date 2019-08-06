@@ -90,7 +90,8 @@ namespace Spyglass {
 
         Encoder encoder;
         encoder.writeValue(replicator_configuration_->effectiveOptions());
-        replicator_parameters_.optionsDictFleece = encoder.finish();
+        alloc_slice replicator_options = encoder.finish();
+        replicator_parameters_.optionsDictFleece = replicator_options;
 
         // Callback function for outgoing revision event
         // This is used for log purposes!
