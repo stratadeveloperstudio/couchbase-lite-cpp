@@ -39,7 +39,7 @@ using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
 
-namespace Spyglass {
+namespace Strata {
     SGReplicator::SGReplicator() {
         replicator_parameters_.callbackContext = this;
         replicator_parameters_.push = kC4Disabled;

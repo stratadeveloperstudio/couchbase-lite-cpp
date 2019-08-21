@@ -24,7 +24,7 @@
 
 #include "SGUtility.h"
 #include <fleece/FleeceImpl.hh>
-namespace Spyglass{
+namespace Strata {
 
     void logC4Error(const C4Error &err){
         fleece::alloc_slice error_message = c4error_getDescription(err);

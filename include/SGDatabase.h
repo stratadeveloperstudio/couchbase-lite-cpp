@@ -32,7 +32,7 @@
 #include <fleece/FleeceImpl.hh>
 #include "SGDocument.h"
 
-namespace Spyglass {
+namespace Strata {
     // Forward declaration is required due to the circular include for SGDatabase<->SGDocument.
     class SGDocument;
 

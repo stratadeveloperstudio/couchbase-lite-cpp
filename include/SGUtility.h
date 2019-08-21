@@ -25,7 +25,7 @@
 #ifndef SGUTILITY_H
 #define SGUTILITY_H
 #include <litecore/c4.h>
-namespace Spyglass{
+namespace Strata {
     void logC4Error(const C4Error &err);
 }
 #endif //SGUTILITY_H

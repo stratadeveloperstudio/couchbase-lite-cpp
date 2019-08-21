@@ -33,7 +33,7 @@
 
 #include "SGDatabase.h"
 #include "SGReplicatorConfiguration.h"
-namespace Spyglass {
+namespace Strata {
     typedef struct {
         uint64_t completed;// The number of completed changes processed.
         uint64_t total;// The total number of changes to be processed.

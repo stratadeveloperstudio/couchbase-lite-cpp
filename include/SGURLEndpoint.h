@@ -29,7 +29,7 @@
 
 #include <litecore/c4.h>
 
-namespace Spyglass {
+namespace Strata {
     class SGURLEndpoint {
 
     public:

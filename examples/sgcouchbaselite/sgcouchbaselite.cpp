@@ -32,7 +32,7 @@ using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
 using namespace std::placeholders;
-using namespace Spyglass;
+using namespace Strata;
 
 #define DEBUG(...) printf("TEST SGLiteCore: "); printf(__VA_ARGS__)
 

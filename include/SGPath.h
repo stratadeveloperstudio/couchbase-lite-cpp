@@ -27,7 +27,7 @@
 
 #include <string>
 
-namespace Spyglass {
+namespace Strata {
 
     class SGPath {
     public:

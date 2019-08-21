@@ -26,7 +26,7 @@
 #define SGMUTABLEDOCUMENT_H
 
 #include "SGDocument.h"
-namespace Spyglass {
+namespace Strata {
     class SGMutableDocument : public SGDocument {
     public:
         SGMutableDocument(SGDatabase *database, const std::string &docId);

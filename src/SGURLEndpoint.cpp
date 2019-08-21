@@ -28,7 +28,7 @@ using namespace std;
 using namespace fleece;
 #define DEBUG(...) printf("SGURLEndpoint: "); printf(__VA_ARGS__)
 
-namespace Spyglass {
+namespace Strata {
     SGURLEndpoint::SGURLEndpoint() {
         c4address_.hostname = slice();
         c4address_.path = slice();

@@ -30,7 +30,7 @@
 #include <fleece/MutableArray.hh>
 #include <fleece/MutableDict.hh>
 
-namespace Spyglass {
+namespace Strata {
     class SGAuthenticator {
     public:
         SGAuthenticator() {}
