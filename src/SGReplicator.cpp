@@ -103,6 +103,13 @@ namespace Strata {
             return true;
         };
 
+        if(on_status_changed_callback_ == nullptr){
+            addChangeListener([](SGReplicator::ActivityLevel, SGReplicatorProgress progress){
+                // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
+                // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
+            });
+        }
+
         c4replicator_ = c4repl_new(replicator_configuration_->getDatabase()->getC4db(),
                                    replicator_configuration_->getUrlEndpoint()->getC4Address(),
                                    slice(replicator_configuration_->getUrlEndpoint()->getPath()),
