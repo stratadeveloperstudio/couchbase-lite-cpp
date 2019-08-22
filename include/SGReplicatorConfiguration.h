@@ -25,6 +25,7 @@
 #ifndef SGREPLICATORCONFIGURATION_H
 #define SGREPLICATORCONFIGURATION_H
 
+#include <iostream>
 #include "SGDatabase.h"
 #include "SGURLEndpoint.h"
 #include "SGAuthenticator.h"
@@ -47,6 +48,8 @@ namespace Strata {
             kPush,
             kPull
         };
+
+        friend std::ostream& operator << (std::ostream& os, const ReplicatorType& rep_type);
 
         SGDatabase *getDatabase() const;
 

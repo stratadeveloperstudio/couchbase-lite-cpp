@@ -119,4 +119,8 @@ namespace Strata {
 
         return true;
     }
+
+    std::ostream& operator << (std::ostream& os, const SGReplicatorConfiguration::ReplicatorType& rep_type){
+        return os << static_cast<underlying_type<SGReplicatorConfiguration::ReplicatorType>::type> (rep_type);
+    }
 }

@@ -52,6 +52,8 @@ namespace Strata {
         kInvalidDocBody
     };
 
+    std::ostream& operator << (std::ostream& os, const SGDatabaseReturnStatus& return_status);
+
     /*
      * Thread safe is guaranteed on these functions:
      * getC4db(), open(), isOpen(), close(), save(), getDocumentById(), deleteDocument(), getAllDocumentsKey()

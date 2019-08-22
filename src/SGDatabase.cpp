@@ -351,4 +351,8 @@ namespace Strata {
 
         return true;
     }
+
+    std::ostream& operator << (std::ostream& os, const SGDatabaseReturnStatus& return_status){
+        return os << static_cast<underlying_type<SGDatabaseReturnStatus>::type> (return_status);
+    }
 }

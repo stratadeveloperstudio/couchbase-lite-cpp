@@ -23,11 +23,6 @@
 //  limitations under the License.
 
 #include <string>
-#include <algorithm>
-#include <chrono>
-#include <future>
-#include <thread>
-#include <set>
 
 #include <litecore/CivetWebSocket.hh>
 
@@ -210,5 +205,13 @@ namespace Strata {
             // Accept All documents
             return true;
         };
+    }
+
+    std::ostream& operator << (std::ostream& os, const SGReplicatorReturnStatus& return_status){
+        return os << static_cast<underlying_type<SGReplicatorReturnStatus>::type> (return_status);
+    }
+
+    std::ostream& operator << (std::ostream& os, const SGReplicator::ActivityLevel& activity_level){
+        return os << static_cast<underlying_type<SGReplicator::ActivityLevel>::type> (activity_level);
     }
 }

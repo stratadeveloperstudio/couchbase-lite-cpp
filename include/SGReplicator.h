@@ -28,6 +28,7 @@
 #include <functional>
 #include <future>
 #include <thread>
+#include <iostream>
 
 #include <litecore/c4.h>
 
@@ -47,6 +48,9 @@ namespace Strata {
         kInternalError,
         kAboutToStop, // Asked to stop the replicator while it's running.
     };
+
+    std::ostream& operator << (std::ostream& os, const SGReplicatorReturnStatus& return_status);
+
     /*
      * Warning: This object can be initialized only once in the program life cycle. See constructor for more information.
      *
@@ -72,6 +76,8 @@ namespace Strata {
             kIdle,
             kBusy
         };
+
+        friend std::ostream& operator << (std::ostream& os, const ActivityLevel& activity_level);
 
         /** SGReplicator start.
         * @brief Starts a C4replicator. Thread Safe.
