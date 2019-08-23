@@ -32,7 +32,7 @@
 #include <fleece/FleeceImpl.hh>
 #include "SGDocument.h"
 
-namespace Spyglass {
+namespace Strata {
     // Forward declaration is required due to the circular include for SGDatabase<->SGDocument.
     class SGDocument;
 
@@ -51,6 +51,8 @@ namespace Spyglass {
         kInvalidArgumentError,
         kInvalidDocBody
     };
+
+    std::ostream& operator << (std::ostream& os, const SGDatabaseReturnStatus& return_status);
 
     /*
      * Thread safe is guaranteed on these functions:

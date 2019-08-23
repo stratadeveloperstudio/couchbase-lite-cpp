@@ -41,7 +41,7 @@ using namespace fleece;
 using namespace fleece::impl;
 
 #define DEBUG(...) printf("SGDatabase: "); printf(__VA_ARGS__)
-namespace Spyglass {
+namespace Strata {
     SGDatabase::SGDatabase() {}
 
     SGDatabase::SGDatabase(const std::string &db_name): SGDatabase(db_name, string())  {}
@@ -350,5 +350,9 @@ namespace Spyglass {
         }
 
         return true;
+    }
+
+    std::ostream& operator << (std::ostream& os, const SGDatabaseReturnStatus& return_status){
+        return os << static_cast<underlying_type<SGDatabaseReturnStatus>::type> (return_status);
     }
 }

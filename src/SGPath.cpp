@@ -27,7 +27,7 @@
 #include <litecore/Error.hh>
 #define DEBUG(...) printf("SGPath: "); printf(__VA_ARGS__)
 using namespace litecore;
-namespace Spyglass{
+namespace Strata {
     SGPath::SGPath(const std::string& path){
         constructPath(path);
     }

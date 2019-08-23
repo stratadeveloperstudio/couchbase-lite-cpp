@@ -23,11 +23,6 @@
 //  limitations under the License.
 
 #include <string>
-#include <algorithm>
-#include <chrono>
-#include <future>
-#include <thread>
-#include <set>
 
 #include <litecore/CivetWebSocket.hh>
 
@@ -39,7 +34,7 @@ using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
 
-namespace Spyglass {
+namespace Strata {
     SGReplicator::SGReplicator() {
         replicator_parameters_.callbackContext = this;
         replicator_parameters_.push = kC4Disabled;
@@ -102,6 +97,13 @@ namespace Spyglass {
                   fleece_body.asString().c_str());
             return true;
         };
+
+        if(on_status_changed_callback_ == nullptr){
+            addChangeListener([](SGReplicator::ActivityLevel, SGReplicatorProgress progress){
+                // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
+                // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
+            });
+        }
 
         c4replicator_ = c4repl_new(replicator_configuration_->getDatabase()->getC4db(),
                                    replicator_configuration_->getUrlEndpoint()->getC4Address(),
@@ -203,5 +205,13 @@ namespace Spyglass {
             // Accept All documents
             return true;
         };
+    }
+
+    std::ostream& operator << (std::ostream& os, const SGReplicatorReturnStatus& return_status){
+        return os << static_cast<underlying_type<SGReplicatorReturnStatus>::type> (return_status);
+    }
+
+    std::ostream& operator << (std::ostream& os, const SGReplicator::ActivityLevel& activity_level){
+        return os << static_cast<underlying_type<SGReplicator::ActivityLevel>::type> (activity_level);
     }
 }

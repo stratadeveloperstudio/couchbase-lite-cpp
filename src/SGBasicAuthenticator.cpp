@@ -28,7 +28,7 @@ using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGBasicAuthenticator: "); printf(__VA_ARGS__)
 
-namespace Spyglass {
+namespace Strata {
     SGBasicAuthenticator::SGBasicAuthenticator() {}
 
     SGBasicAuthenticator::SGBasicAuthenticator(const std::string &username, const std::string &password) {

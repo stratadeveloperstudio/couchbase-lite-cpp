@@ -28,7 +28,7 @@
 #define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
 using fleece::impl::Value;
 using namespace std;
-namespace Spyglass {
+namespace Strata {
     SGDocument::SGDocument() {}
 
     SGDocument::~SGDocument() {

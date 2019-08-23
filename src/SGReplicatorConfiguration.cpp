@@ -30,7 +30,7 @@ using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicatorConfiguration: "); printf(__VA_ARGS__)
 
-namespace Spyglass {
+namespace Strata {
     SGReplicatorConfiguration::SGReplicatorConfiguration() {
         replicator_type_ = ReplicatorType::kPull;
         options_ = fleece::impl::MutableDict::newDict();
@@ -118,5 +118,9 @@ namespace Spyglass {
         }
 
         return true;
+    }
+
+    std::ostream& operator << (std::ostream& os, const SGReplicatorConfiguration::ReplicatorType& rep_type){
+        return os << static_cast<underlying_type<SGReplicatorConfiguration::ReplicatorType>::type> (rep_type);
     }
 }

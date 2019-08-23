@@ -32,7 +32,7 @@ using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
 using namespace std::placeholders;
-using namespace Spyglass;
+using namespace Strata;
 
 #define DEBUG(...) printf("TEST SGLiteCore: "); printf(__VA_ARGS__)
 
@@ -224,7 +224,10 @@ int main(){
     replicator_configuration.setChannels(channels);
     this_thread::sleep_for(chrono::milliseconds(5000));
 
-    replicator.start();
+    if(replicator.start() != SGReplicatorReturnStatus::kNoError){
+        DEBUG("Could not start the replicator!\n");
+        return 1;
+    }
 
     this_thread::sleep_for(chrono::milliseconds(5000));
 
