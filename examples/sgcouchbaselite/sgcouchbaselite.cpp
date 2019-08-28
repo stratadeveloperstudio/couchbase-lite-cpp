@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <thread>
+#include <cinttypes>
 
 #include "SGFleece.h"
 #include "SGCouchBaseLite.h"
@@ -42,7 +43,7 @@ void onStatusChanged(SGReplicator::ActivityLevel level, SGReplicatorProgress pro
     if(progress.total > 0){
         progress_percentage = (progress.completed / progress.total) *100;
     }
-    DEBUG("Replicator Activity Level: %s %f (%d/%d) \n", activity_level_string[(unsigned int)level], progress_percentage, progress.completed, progress.total);
+    DEBUG("Replicator Activity Level: %s %f (%" PRId64"/%" PRId64") \n", activity_level_string[(unsigned int)level], progress_percentage, progress.completed, progress.total);
 }
 void onDocumentEnded(bool pushing, std::string doc_id, std::string error_message, bool is_error,bool transient){
     DEBUG("onDocumentError: pushing: %d, Doc Id: %s, is error: %d, error message: %s, transient:%d\n", pushing, doc_id.c_str(), is_error, error_message.c_str(), transient);
@@ -126,7 +127,7 @@ int main(){
         DEBUG("Doc body does not match the original json string used to set the body\n");
         return 1;
     }
-    
+
     SGMutableDocument usbPDDocument(&sgDatabase, "usb-pd-document");
 
 
