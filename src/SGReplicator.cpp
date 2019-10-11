@@ -65,11 +65,15 @@ namespace Strata {
         if(c4replicator_ != nullptr){
             told_to_stop_ = true;
             c4repl_stop(c4replicator_);
+            rep_fully_stopped_ = true;
+            cv_.notify_one();
         }
     }
 
     SGReplicatorReturnStatus SGReplicator::start() {
-        lock_guard<mutex> lock(replicator_lock_);
+
+        std::unique_lock<std::mutex> lck(replicator_lock_);
+        cv_.wait(lck, [this]{return rep_fully_stopped_;});
 
         if(told_to_stop_){
             return SGReplicatorReturnStatus::kAboutToStop;
@@ -82,6 +86,8 @@ namespace Strata {
         if (!isValidSGReplicatorConfiguration()) {
             return SGReplicatorReturnStatus::kConfigurationError;
         }
+
+        rep_fully_stopped_ = false;
 
         Encoder encoder;
         encoder.writeValue(replicator_configuration_->effectiveOptions());
@@ -131,17 +137,15 @@ namespace Strata {
             case SGReplicatorConfiguration::ReplicatorType::kPush:
                 replicator_parameters_.push = kC4Continuous;
                 replicator_parameters_.pull = kC4Disabled;
-
                 break;
             case SGReplicatorConfiguration::ReplicatorType::kPull:
                 replicator_parameters_.push = kC4Disabled;
                 replicator_parameters_.pull = kC4Continuous;
                 break;
             default:
-            DEBUG("No replicator type has been provided.");
+                DEBUG("No replicator type has been provided.");
                 break;
         }
-
     }
 
     bool SGReplicator::isValidSGReplicatorConfiguration() {
@@ -161,15 +165,30 @@ namespace Strata {
             ((SGReplicator *) context)->on_status_changed_callback_((SGReplicator::ActivityLevel) replicator_status.level, progress);
 
             SGReplicator *ref = ((SGReplicator *) context);
-            if(ref && replicator){
-              lock_guard<mutex> lock(ref->replicator_lock_);
-              if(replicator_status.level == kC4Stopped){
-                c4repl_free(ref->c4replicator_);
-                ref->c4replicator_ = nullptr;
-                ref->told_to_stop_ = false;
-              }
+            if(ref && replicator && replicator_status.level == kC4Stopped) {
+                {
+                    lock_guard<mutex> lock(ref->replicator_lock_);
+                    c4repl_free(ref->c4replicator_);
+                    ref->c4replicator_ = nullptr;
+                    ref->told_to_stop_ = false;
+                    ref->rep_fully_stopped_ = true;
+                }
+
+                // Error code == 0 means no errors were found
+                // In that case, do not restart since stopping was intentional
+                if(replicator_status.error.code != 0) {
+                    ref->restart();
+                }
             }
         };
+    }
+
+    SGReplicatorReturnStatus SGReplicator::restart() {
+        if(!rep_fully_stopped_) {
+            this->stop();
+        }
+
+        return this->start();
     }
 
     void SGReplicator::addDocumentEndedListener(
