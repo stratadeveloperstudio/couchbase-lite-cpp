@@ -45,6 +45,13 @@ namespace Strata {
         kAboutToStop // Asked to stop the replicator while it's running.
     };
 
+    enum class SGReplicatorInternalStatus {
+        kToldToStart,
+        kStarted,
+        kToldToStop,
+        kStopped
+    };
+
     std::ostream& operator << (std::ostream& os, const SGReplicatorReturnStatus& return_status);
 
     /*
@@ -132,10 +139,7 @@ namespace Strata {
 
         // c4repl_stop is async and we need to track it so we don't endup with running another replicator.
         // When Activity status changed to stopped then we can free the replicator.
-        bool told_to_stop_ {false};
-
-        std::condition_variable cv_;
-        bool rep_fully_stopped_ {true};
+        SGReplicatorInternalStatus internal_status_ = SGReplicatorInternalStatus::kStopped;
     };
 }
 

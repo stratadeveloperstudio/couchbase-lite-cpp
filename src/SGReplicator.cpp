@@ -35,7 +35,7 @@ using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
 
 namespace Strata {
-    SGReplicator::SGReplicator() {
+    SGReplicator::SGReplicator() { DEBUG("\n\n[VICTOR] new build 5:25PM\n\n");
         replicator_parameters_.callbackContext = this;
         replicator_parameters_.push = kC4Disabled;
         replicator_parameters_.pull = kC4Disabled;
@@ -63,19 +63,15 @@ namespace Strata {
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
         if(c4replicator_ != nullptr){
-            told_to_stop_ = true;
+            internal_status_ == Strata::SGReplicatorInternalStatus::kToldToStop;
             c4repl_stop(c4replicator_);
-            rep_fully_stopped_ = true;
-            cv_.notify_one();
         }
     }
 
     SGReplicatorReturnStatus SGReplicator::start() {
+        lock_guard<mutex> lock(replicator_lock_);
 
-        std::unique_lock<std::mutex> lck(replicator_lock_);
-        cv_.wait(lck, [this]{return rep_fully_stopped_;});
-
-        if(told_to_stop_){
+        if(internal_status_ == Strata::SGReplicatorInternalStatus::kToldToStop) {
             return SGReplicatorReturnStatus::kAboutToStop;
         }
 
@@ -87,7 +83,7 @@ namespace Strata {
             return SGReplicatorReturnStatus::kConfigurationError;
         }
 
-        rep_fully_stopped_ = false;
+        internal_status_ = Strata::SGReplicatorInternalStatus::kToldToStart;
 
         Encoder encoder;
         encoder.writeValue(replicator_configuration_->effectiveOptions());
@@ -124,6 +120,8 @@ namespace Strata {
             DEBUG("Replication failed.\n");
             return SGReplicatorReturnStatus::kInternalError;
         }
+
+        internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
         return SGReplicatorReturnStatus::kNoError;
     }
 
@@ -165,26 +163,30 @@ namespace Strata {
             ((SGReplicator *) context)->on_status_changed_callback_((SGReplicator::ActivityLevel) replicator_status.level, progress);
 
             SGReplicator *ref = ((SGReplicator *) context);
-            if(ref && replicator && replicator_status.level == kC4Stopped) {
-                {
-                    lock_guard<mutex> lock(ref->replicator_lock_);
-                    c4repl_free(ref->c4replicator_);
-                    ref->c4replicator_ = nullptr;
-                    ref->told_to_stop_ = false;
-                    ref->rep_fully_stopped_ = true;
-                }
+            if(ref && replicator) {
+                if(replicator_status.level == kC4Stopped) {
+                    {
+                        lock_guard<mutex> lock(ref->replicator_lock_);
+                        c4repl_free(ref->c4replicator_);
+                        ref->c4replicator_ = nullptr;
+                        ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
+                    }
 
-                // Error code == 0 means no errors were found
-                // In that case, do not restart since stopping was intentional
-                if(replicator_status.error.code != 0) {
-                    ref->restart();
+                    // Error code == 0 means no errors were found
+                    // In that case, do not restart since stopping was intentional
+                    if(replicator_status.error.code != 0) {
+                        ref->start();
+                    }
+                }
+                else {
+                    ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
                 }
             }
         };
     }
 
     SGReplicatorReturnStatus SGReplicator::restart() {
-        if(!rep_fully_stopped_) {
+        if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
             this->stop();
         }
 
