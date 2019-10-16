@@ -25,7 +25,6 @@
 #ifndef SGREPLICATOR_H
 #define SGREPLICATOR_H
 
-#include <condition_variable>
 #include <litecore/c4.h>
 
 #include "SGDatabase.h"

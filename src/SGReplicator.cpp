@@ -35,7 +35,7 @@ using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
 
 namespace Strata {
-    SGReplicator::SGReplicator() { DEBUG("\n\n[VICTOR] new build 5:25PM\n\n");
+    SGReplicator::SGReplicator() {
         replicator_parameters_.callbackContext = this;
         replicator_parameters_.push = kC4Disabled;
         replicator_parameters_.pull = kC4Disabled;
