@@ -1,5 +1,5 @@
 //
-//  SGCouchBaseLite.h
+//  SGAuthenticator.h
 //
 //  Copyright 2014 ON Semiconductor.
 //  All rights reserved. This software and/or documentation is licensed by ON Semiconductor under
@@ -22,16 +22,54 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef SGCOUCHBASELITE_H
-#define SGCOUCHBASELITE_H
+#ifndef SGBUCKETMANAGER_H
+#define SGBUCKETMANAGER_H
 
-#include "SGDatabase.h"
-#include "SGDocument.h"
-#include "SGMutableDocument.h"
-#include "SGReplicator.h"
-#include "SGReplicatorConfiguration.h"
-#include "SGURLEndpoint.h"
-#include "SGAuthenticator.h"
-#include "SGBucketManager.h"
+#include <string>
 
-#endif //SGCOUCHBASELITE_H
+#include <SGDocument.h>
+#include <SGMutableDocument.h>
+
+// #include <fleece/FleeceImpl.hh>
+// #include <fleece/MutableArray.hh>
+// #include <fleece/MutableDict.hh>
+
+namespace Strata {
+
+    enum class SGBucketReturnStatus {
+        kError,
+        kNoError
+    };
+
+    class SGBucket {
+    public:
+        SGBucket(const std::string &bucket_name, const std::string &bucket_path = std::string());
+
+        ~SGBucket();
+
+        SGBucketReturnStatus createDocument(const std::pair<std::string, std::string> &doc);
+
+    private:
+        // std::unique_ptr<SGDatabase> db_;
+        SGDatabase *db_;
+    };
+
+    class SGBucketManager {
+    public:
+        SGBucketManager();
+
+        ~SGBucketManager();
+
+        SGBucketReturnStatus createBucket(const std::string &bucket_name, const std::string &bucket_path = std::string());
+
+        SGBucket& getBucketByName(const std::string &bucket_name);
+
+        std::vector<std::string> getBuckets();
+
+    private:
+        std::map<std::string, SGBucket*> buckets_;
+    };
+}
+
+
+#endif //SGBUCKETMANAGER_H

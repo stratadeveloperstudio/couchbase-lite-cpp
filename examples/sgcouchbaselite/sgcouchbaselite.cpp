@@ -66,174 +66,189 @@ private:
 };
 
 int main(){
+    SGBucketManager bmgr;
 
+    bmgr.createBucket("myDB-2");
 
-    //SGDatabase sgDatabase("db2", "/Users/zbgd3f/");
-    // Default db location will be current location location
-    SGDatabase sgDatabase("db2");
+    std::vector<std::string> a = bmgr.getBuckets();
 
-    DEBUG("Database will be stored in: %s\n", sgDatabase.getDBPath().c_str());
+    std::cout << "Buckets: "; for(auto x : a) std::cout << x;
 
-    if (!sgDatabase.isOpen()) {
-        DEBUG("Db is not open yet\n");
-    }
+    std::string id = "my-document";
+    std::string body = "{\"name\":\"victor\"}";
 
-    if (sgDatabase.open() != SGDatabaseReturnStatus::kNoError) {
-        DEBUG("Can't open DB!\n");
-        return 1;
-    }
+    // SGBucket *b = bmgr.getBucketByName("myDB");
 
-    if (sgDatabase.isOpen()) {
-        DEBUG("DB is open using isOpen API\n");
-    } else {
-        DEBUG("DB is not open, exiting!\n");
-        return 1;
-    }
+    SGBucket b = bmgr.getBucketByName("myDB");
 
-    vector<string> document_keys;
-    if(!sgDatabase.getAllDocumentsKey(document_keys)){
-        DEBUG("Failed to run getAllDocumentsKey()\n");
-        return 1;
-    }
+    // b->createDocument(make_pair(id,body));
 
-    // Printing the list of documents key from the local DB.
-    for(std::vector <string>::iterator iter = document_keys.begin(); iter != document_keys.end(); iter++)
-    {
-        DEBUG("Document Key: %s\n", (*iter).c_str());
-    }
+    // //SGDatabase sgDatabase("db2", "/Users/zbgd3f/");
+    // // Default db location will be current location location
+    // SGDatabase sgDatabase("db2");
 
-    SGMutableDocument newdoc(&sgDatabase, "custom_doc");
+    // DEBUG("Database will be stored in: %s\n", sgDatabase.getDBPath().c_str());
 
-    // This is not a valid json.
-    if( !newdoc.setBody("fdfd") ){
-        DEBUG("The body is not set! fdfd is not a valid json\n");
-    }
+    // if (!sgDatabase.isOpen()) {
+    //     DEBUG("Db is not open yet\n");
+    // }
 
-    // This is a valid json.
-    std::string json_data = R"foo({"age":100,"myobj":{"myarray":[1,2,3,4],"mykey":"myvalue"},"name":"luay"})foo";
-    if( newdoc.setBody(json_data) ){
-        DEBUG("json_data is a valid json\n");
-    }
+    // if (sgDatabase.open() != SGDatabaseReturnStatus::kNoError) {
+    //     DEBUG("Can't open DB!\n");
+    //     return 1;
+    // }
 
-    if(sgDatabase.save(&newdoc) != SGDatabaseReturnStatus::kNoError){
-        DEBUG("Could not save a doc after using setBody()\n");
-        return 1;
-    }
+    // if (sgDatabase.isOpen()) {
+    //     DEBUG("DB is open using isOpen API\n");
+    // } else {
+    //     DEBUG("DB is not open, exiting!\n");
+    //     return 1;
+    // }
 
-    DEBUG("%s\n", newdoc.getBody().c_str());
+    // vector<string> document_keys;
+    // if(!sgDatabase.getAllDocumentsKey(document_keys)){
+    //     DEBUG("Failed to run getAllDocumentsKey()\n");
+    //     return 1;
+    // }
 
-    if(json_data.compare(newdoc.getBody()) != 0){
-        DEBUG("Doc body does not match the original json string used to set the body\n");
-        return 1;
-    }
+    // // Printing the list of documents key from the local DB.
+    // for(std::vector <string>::iterator iter = document_keys.begin(); iter != document_keys.end(); iter++)
+    // {
+    //     DEBUG("Document Key: %s\n", (*iter).c_str());
+    // }
+
+    // SGMutableDocument newdoc(&sgDatabase, "custom_doc");
+
+    // // This is not a valid json.
+    // if( !newdoc.setBody("fdfd") ){
+    //     DEBUG("The body is not set! fdfd is not a valid json\n");
+    // }
+
+    // // This is a valid json.
+    // std::string json_data = R"foo({"age":100,"myobj":{"myarray":[1,2,3,4],"mykey":"myvalue"},"name":"luay"})foo";
+    // if( newdoc.setBody(json_data) ){
+    //     DEBUG("json_data is a valid json\n");
+    // }
+
+    // if(sgDatabase.save(&newdoc) != SGDatabaseReturnStatus::kNoError){
+    //     DEBUG("Could not save a doc after using setBody()\n");
+    //     return 1;
+    // }
+
+    // DEBUG("%s\n", newdoc.getBody().c_str());
+
+    // if(json_data.compare(newdoc.getBody()) != 0){
+    //     DEBUG("Doc body does not match the original json string used to set the body\n");
+    //     return 1;
+    // }
     
-    SGMutableDocument usbPDDocument(&sgDatabase, "usb-pd-document");
+    // SGMutableDocument usbPDDocument(&sgDatabase, "usb-pd-document");
 
 
-    DEBUG("document Id: %s, body: %s\n", usbPDDocument.getId().c_str(), usbPDDocument.getBody().c_str());
+    // DEBUG("document Id: %s, body: %s\n", usbPDDocument.getId().c_str(), usbPDDocument.getBody().c_str());
 
-    usbPDDocument.set("number", 30);
-    usbPDDocument.set("name", "hello"_sl);
-
-
-    string name_key = "name";
-
-    const Value *name_value = usbPDDocument.get(name_key);
-    if(name_value){
-
-        if(name_value->type() == kString){
-
-            string name_string = name_value->toString().asString();
-
-            DEBUG("name:%s\n", name_string.c_str());
-        }else{
-            DEBUG("name_value is not a string!\n");
-        }
-
-    }else{
-        DEBUG("There is no such key called: %s\n", name_key.c_str());
-    }
-
-    sgDatabase.save(&usbPDDocument);
-
-    string whatever_key = "game";
-
-    const Value *whatever_value_key = usbPDDocument.get(whatever_key);
-    if(whatever_value_key){
-
-        if(whatever_value_key->type() == kNumber){
-            usbPDDocument.set(whatever_key, usbPDDocument.get(whatever_key)->asInt() + 1);
-        }else{
-            DEBUG("Warning: No such key:%s exist\n",whatever_key.c_str());
-        }
-    }else{
-        usbPDDocument.set(whatever_key, 0);
-    }
-
-    sgDatabase.save(&usbPDDocument);
-
-    DEBUG("Document Body after save: %s\n", usbPDDocument.getBody().c_str());
+    // usbPDDocument.set("number", 30);
+    // usbPDDocument.set("name", "hello"_sl);
 
 
-    // Bellow Replicator API
-    string my_url = "ws://localhost:4984/staging";
-    SGURLEndpoint url_endpoint(my_url);
+    // string name_key = "name";
 
-    if(url_endpoint.init()){
-        DEBUG("url_endpoint is valid \n");
-    }else{
-        DEBUG("Invalid url_endpoint\n");
-        return 1;
-    }
+    // const Value *name_value = usbPDDocument.get(name_key);
+    // if(name_value){
 
-    DEBUG("host %s, \n", url_endpoint.getHost().c_str());
-    DEBUG("schema %s, \n", url_endpoint.getSchema().c_str());
-    DEBUG("getPath %s, \n", url_endpoint.getPath().c_str());
+    //     if(name_value->type() == kString){
 
-    SGReplicatorConfiguration replicator_configuration(&sgDatabase, &url_endpoint);
+    //         string name_string = name_value->toString().asString();
 
-    SGBasicAuthenticator basic_authenticator("username","password");
+    //         DEBUG("name:%s\n", name_string.c_str());
+    //     }else{
+    //         DEBUG("name_value is not a string!\n");
+    //     }
 
-    replicator_configuration.setAuthenticator(&basic_authenticator);
+    // }else{
+    //     DEBUG("There is no such key called: %s\n", name_key.c_str());
+    // }
 
-    replicator_configuration.setReplicatorType(SGReplicatorConfiguration::ReplicatorType::kPushAndPull);
+    // sgDatabase.save(&usbPDDocument);
 
-    vector<string> channels = {"channel1", "random_channel_name"};
-    replicator_configuration.setChannels(channels);
+    // string whatever_key = "game";
 
-    SGReplicator replicator(&replicator_configuration);
+    // const Value *whatever_value_key = usbPDDocument.get(whatever_key);
+    // if(whatever_value_key){
 
+    //     if(whatever_value_key->type() == kNumber){
+    //         usbPDDocument.set(whatever_key, usbPDDocument.get(whatever_key)->asInt() + 1);
+    //     }else{
+    //         DEBUG("Warning: No such key:%s exist\n",whatever_key.c_str());
+    //     }
+    // }else{
+    //     usbPDDocument.set(whatever_key, 0);
+    // }
 
-    replicator.addChangeListener(onStatusChanged);
-    replicator.addDocumentEndedListener(onDocumentEnded);
+    // sgDatabase.save(&usbPDDocument);
 
-    MiniHCS miniHCS(&sgDatabase);
-    replicator.addValidationListener( bind(&MiniHCS::onValidate, &miniHCS, _1, _2) );
-
-
-    if(replicator.start() != SGReplicatorReturnStatus::kNoError){
-        DEBUG("Could not start the replicator!\n");
-        return 1;
-    }
-
-    DEBUG("About to stop the replicator thread\n");
-    this_thread::sleep_for(chrono::milliseconds(1000));
-
-    replicator.stop();
-    channels = {"random_channel_name"};
-    replicator_configuration.setChannels(channels);
-    this_thread::sleep_for(chrono::milliseconds(5000));
-
-    if(replicator.start() != SGReplicatorReturnStatus::kNoError){
-        DEBUG("Could not start the replicator!\n");
-        return 1;
-    }
-
-    this_thread::sleep_for(chrono::milliseconds(5000));
+    // DEBUG("Document Body after save: %s\n", usbPDDocument.getBody().c_str());
 
 
-    DEBUG("bye\n");
+    // // Bellow Replicator API
+    // string my_url = "ws://localhost:4984/staging";
+    // SGURLEndpoint url_endpoint(my_url);
+
+    // if(url_endpoint.init()){
+    //     DEBUG("url_endpoint is valid \n");
+    // }else{
+    //     DEBUG("Invalid url_endpoint\n");
+    //     return 1;
+    // }
+
+    // DEBUG("host %s, \n", url_endpoint.getHost().c_str());
+    // DEBUG("schema %s, \n", url_endpoint.getSchema().c_str());
+    // DEBUG("getPath %s, \n", url_endpoint.getPath().c_str());
+
+    // SGReplicatorConfiguration replicator_configuration(&sgDatabase, &url_endpoint);
+
+    // SGBasicAuthenticator basic_authenticator("username","password");
+
+    // replicator_configuration.setAuthenticator(&basic_authenticator);
+
+    // replicator_configuration.setReplicatorType(SGReplicatorConfiguration::ReplicatorType::kPushAndPull);
+
+    // vector<string> channels = {"channel1", "random_channel_name"};
+    // replicator_configuration.setChannels(channels);
+
+    // SGReplicator replicator(&replicator_configuration);
 
 
+    // replicator.addChangeListener(onStatusChanged);
+    // replicator.addDocumentEndedListener(onDocumentEnded);
+
+    // MiniHCS miniHCS(&sgDatabase);
+    // replicator.addValidationListener( bind(&MiniHCS::onValidate, &miniHCS, _1, _2) );
+
+
+    // if(replicator.start() != SGReplicatorReturnStatus::kNoError){
+    //     DEBUG("Could not start the replicator!\n");
+    //     return 1;
+    // }
+
+    // DEBUG("About to stop the replicator thread\n");
+    // this_thread::sleep_for(chrono::milliseconds(1000));
+
+    // replicator.stop();
+    // channels = {"random_channel_name"};
+    // replicator_configuration.setChannels(channels);
+    // this_thread::sleep_for(chrono::milliseconds(5000));
+
+    // if(replicator.start() != SGReplicatorReturnStatus::kNoError){
+    //     DEBUG("Could not start the replicator!\n");
+    //     return 1;
+    // }
+
+    // this_thread::sleep_for(chrono::milliseconds(5000));
+
+
+    // DEBUG("bye\n");
+
+    cout << "\n\n\n\n" << endl;
     return 0;
 }
