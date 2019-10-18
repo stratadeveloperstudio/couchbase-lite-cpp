@@ -27,6 +27,7 @@
 
 #include <string>
 
+#include "SGReplicator.h"
 #include <SGDocument.h>
 #include <SGMutableDocument.h>
 
@@ -35,6 +36,9 @@
 // #include <fleece/MutableDict.hh>
 
 namespace Strata {
+
+    // Forward declaration is required due to the circular include for SGBucket<->SGDocument.
+    class SGDocument;
 
     enum class SGBucketReturnStatus {
         kError,
@@ -45,13 +49,64 @@ namespace Strata {
     public:
         SGBucket(const std::string &bucket_name, const std::string &bucket_path = std::string());
 
-        ~SGBucket();
+        /* Standard CRUD operations */
 
         SGBucketReturnStatus createDocument(const std::pair<std::string, std::string> &doc);
 
+        SGBucketReturnStatus updateDocument(const std::string &doc_name, const std::string &json_body);
+
+        SGBucketReturnStatus readDocument(const std::string &doc_name, std::string &json_body);
+
+        SGBucketReturnStatus deleteDocument(const std::string &doc_name);
+
+        /* Additional database operations */
+
+        SGBucketReturnStatus getDocumentKeys(std::vector<std::string> &doc_keys);
+
+        SGBucketReturnStatus readContents(std::unordered_map<std::string, std::string> &contents);
+
+        /* Replicator API */
+
+        // SGBucketReturnStatus startReplicator(std::string url,
+        //                                      std::string rep_type,
+        //                                      std::string username,
+        //                                      std::string password,
+        //                                      std::vector<std::string> channels,
+        //                                      const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &status_changed,
+        //                                      const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended,
+        //                                      const std::function<void(const std::string, const std::string)> &valid_listener);
+
+        SGBucketReturnStatus startReplicator(std::string url,
+                                                   std::string rep_type,
+                                                   std::string username,
+                                                   std::string password,
+                                                   std::vector<std::string> channels,
+                                                   const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &stat_changed = std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)>(),
+                                                   const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended = std::function<void(bool, std::string, std::string, bool, bool)>(),
+                                                   const std::function<void(const std::string, const std::string)> &valid_listener = std::function<void(const std::string, const std::string)>());
+
+        SGBucketReturnStatus stopReplicator();    
+
     private:
-        // std::unique_ptr<SGDatabase> db_;
-        SGDatabase *db_;
+        std::string bucket_name_;
+        
+        std::unique_ptr<SGDatabase> db_;
+
+        std::unique_ptr<SGURLEndpoint> url_endpoint_ = nullptr;
+
+        std::unique_ptr<SGReplicatorConfiguration> replicator_configuration_ = nullptr;
+
+        std::unique_ptr<SGBasicAuthenticator> basic_authenticator_ = nullptr;
+
+        std::unique_ptr<SGReplicator> replicator_ = nullptr;
+
+        void onValidate_(const std::string& doc_id, const std::string& json_body) {
+            printf("MiniHCS: New incoming revision: Doc Id: %s, Doc body: %s\n", doc_id.c_str(), json_body.c_str() );
+            SGDocument document(db_.get(), doc_id);
+            printf("MiniHCS: existing revision: Doc Id: %s, Doc body: %s\n", doc_id.c_str(), document.getBody().c_str() );
+        }
+
+        friend SGDocument;
     };
 
     class SGBucketManager {
@@ -60,16 +115,17 @@ namespace Strata {
 
         ~SGBucketManager();
 
-        SGBucketReturnStatus createBucket(const std::string &bucket_name, const std::string &bucket_path = std::string());
-
-        SGBucket& getBucketByName(const std::string &bucket_name);
-
         std::vector<std::string> getBuckets();
 
+        bool bucketExists(const std::string &bucket_name);
+
+        SGBucket* createBucket(const std::string &bucket_name, const std::string &bucket_path = std::string());
+
+        SGBucketReturnStatus deleteBucket(const std::string &bucket_name);
+
     private:
-        std::map<std::string, SGBucket*> buckets_;
+        std::unordered_map<std::string, SGBucket*> buckets_;
     };
 }
-
 
 #endif //SGBUCKETMANAGER_H

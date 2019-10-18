@@ -48,10 +48,27 @@ void onDocumentEnded(bool pushing, std::string doc_id, std::string error_message
     DEBUG("onDocumentError: pushing: %d, Doc Id: %s, is error: %d, error message: %s, transient:%d\n", pushing, doc_id.c_str(), is_error, error_message.c_str(), transient);
 }
 
+
 // Mini object to show how to bind functions from another object
+// class MiniHCS{
+// public:
+//     MiniHCS(SGDatabase *db){
+//         db_ = db;
+//     };
+//     virtual~MiniHCS(){};
+//     void onValidate(const std::string& doc_id, const std::string& json_body) {
+//         printf("MiniHCS: New incoming revision: Doc Id: %s, Doc body: %s\n", doc_id.c_str(), json_body.c_str() );
+//         SGDocument document(db_, doc_id);
+//         printf("MiniHCS: existing revision: Doc Id: %s, Doc body: %s\n", doc_id.c_str(), document.getBody().c_str() );
+//     }
+
+// private:
+//     SGDatabase *db_;
+// };
+
 class MiniHCS{
 public:
-    MiniHCS(SGDatabase *db){
+    MiniHCS(SGBucket *db){
         db_ = db;
     };
     virtual~MiniHCS(){};
@@ -62,26 +79,83 @@ public:
     }
 
 private:
-    SGDatabase *db_;
+    SGBucket *db_;
 };
+
 
 int main(){
     SGBucketManager bmgr;
 
-    bmgr.createBucket("myDB-2");
+    SGBucket *b = bmgr.createBucket("myDB-Rep");
 
-    std::vector<std::string> a = bmgr.getBuckets();
+    cout << "\nDoes bucket myDB-211 exist? " << bmgr.bucketExists("myDB-211") << endl;
+    cout << "\nDoes bucket myDB-299 exist? " << bmgr.bucketExists("myDB-299") << endl << endl;
 
-    std::cout << "Buckets: "; for(auto x : a) std::cout << x;
+    std::string id = "my-doc";
+    std::string body = "{\"name\":\"Victor Luiz\"}";
 
-    std::string id = "my-document";
-    std::string body = "{\"name\":\"victor\"}";
+    if(b) b->createDocument(make_pair(id,body));
 
-    // SGBucket *b = bmgr.getBucketByName("myDB");
+    if(b) b->deleteDocument("abcd");
 
-    SGBucket b = bmgr.getBucketByName("myDB");
+    if(b) b->deleteDocument("my-document");
 
-    // b->createDocument(make_pair(id,body));
+    if(b) b->deleteDocument("my-document");
+
+    if(b) b->createDocument(make_pair(id,body));
+
+    if(b) b->updateDocument("my-doc","{\"name\":\"victor\",\"age\":25}");
+
+    std::vector<std::string> keys;
+
+    if(b) b->createDocument(make_pair("document2",body));
+
+    if(b) {b->getDocumentKeys(keys); cout << "\nCurrent document names: "; for(auto s : keys) cout << s << " "; cout << endl; }
+
+    std::string s; b->readDocument("document2",s);
+
+    cout << "\nReading document document2: " << s << endl;
+
+    if(b) b->deleteDocument("my-document");
+    if(b) b->deleteDocument("document2");
+
+    std::unordered_map<std::string, std::string> contents;
+    b->readContents(contents);
+
+    cout << "\nEvery document and contents of B:"; for(auto x : contents) cout << endl << x.first << " " << x.second;
+
+    cout << "\n\n";
+
+    // bmgr.deleteBucket("myDB-211");
+    bmgr.deleteBucket("myDB-299");
+
+    // b->createDocument(make_pair("deleted",body));
+
+    MiniHCS miniHCS(b);
+
+    std::vector<std::string> chan1 = {"chan1"};
+    // b->startReplicator("ws://localhost:4984/db", "pull", "", "", /*std::vector<std::string>()*/ chan1, onStatusChanged, onDocumentEnded, bind(&MiniHCS::onValidate, &miniHCS, _1, _2));
+
+    b->startReplicator("ws://localhost:4984/db", "pull", "", "", /*std::vector<std::string>()*/ chan1);
+
+    // SGBucket *c = bmgr.createBucket("myDB-408");
+
+    // MiniHCS miniHCS(c);
+    // replicator.addValidationListener( bind(&MiniHCS::onValidate, &miniHCS, _1, _2) );
+
+    // c->startReplicator("ws://localhost:4984/db", "pull", "", "", std::vector<std::string>(), onStatusChanged, onDocumentEnded, bind(&MiniHCS::onValidate, &miniHCS, _1, _2));
+
+    this_thread::sleep_for(chrono::milliseconds(5000));
+
+
+
+    // SGBucket *b2 = bmgr.getBucketByName("myDB-200");
+    // b2->createDocument(make_pair(id,body));
+
+    // std::unordered_map<std::string, std::string> contents2;
+    // b2->readContents(contents2);
+
+    // cout << "\nEvery document and contents of B2:"; for(auto x : contents2) cout << endl << x.first << " " << x.second;
 
     // //SGDatabase sgDatabase("db2", "/Users/zbgd3f/");
     // // Default db location will be current location location
@@ -244,11 +318,11 @@ int main(){
     //     return 1;
     // }
 
-    // this_thread::sleep_for(chrono::milliseconds(5000));
+    // this_thread::sleep_for(chrono::milliseconds(500));
 
 
     // DEBUG("bye\n");
 
-    cout << "\n\n\n\n" << endl;
+    // cout << "\n\n\n\n" << endl;
     return 0;
 }

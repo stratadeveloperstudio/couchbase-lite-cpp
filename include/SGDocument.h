@@ -35,6 +35,8 @@
 namespace Strata {
     // Forward declaration is required due to the circular include for SGDatabase<->SGDocument.
     class SGDatabase;
+    // Forward declaration is required due to the circular include for SGBucket<->SGDocument.
+    class SGBucket;
 
     class SGDocument {
     public:
@@ -43,6 +45,8 @@ namespace Strata {
         virtual ~SGDocument();
 
         SGDocument(SGDatabase *database, const std::string &docId);
+
+        SGDocument(SGBucket *bucket, const std::string &docId);
 
         C4Document *getC4document() const;
 
@@ -87,6 +91,7 @@ namespace Strata {
         void setC4document(C4Document *);
 
         friend SGDatabase;
+
     protected:
 
         /** SGDocument initMutableDict.
