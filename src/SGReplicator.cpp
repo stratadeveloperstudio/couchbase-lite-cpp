@@ -52,7 +52,6 @@ namespace Strata {
 
     SGReplicator::~SGReplicator() {
         stop();
-        c4repl_free(c4replicator_);
     }
 
     SGReplicator::SGReplicator(SGReplicatorConfiguration *replicator_configuration): SGReplicator() {
@@ -63,15 +62,16 @@ namespace Strata {
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
         if(c4replicator_ != nullptr){
-            internal_status_ == Strata::SGReplicatorInternalStatus::kToldToStop;
+            internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
             c4repl_stop(c4replicator_);
+            c4repl_free(c4replicator_);
         }
     }
 
     SGReplicatorReturnStatus SGReplicator::start() {
         lock_guard<mutex> lock(replicator_lock_);
 
-        if(internal_status_ == Strata::SGReplicatorInternalStatus::kToldToStop) {
+        if(internal_status_ == Strata::SGReplicatorInternalStatus::kStopping) {
             return SGReplicatorReturnStatus::kAboutToStop;
         }
 
@@ -83,7 +83,7 @@ namespace Strata {
             return SGReplicatorReturnStatus::kConfigurationError;
         }
 
-        internal_status_ = Strata::SGReplicatorInternalStatus::kToldToStart;
+        internal_status_ = Strata::SGReplicatorInternalStatus::kStarting;
 
         Encoder encoder;
         encoder.writeValue(replicator_configuration_->effectiveOptions());
