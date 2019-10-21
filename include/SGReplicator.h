@@ -45,9 +45,9 @@ namespace Strata {
     };
 
     enum class SGReplicatorInternalStatus {
-        kToldToStart,
+        kStarting,
         kStarted,
-        kToldToStop,
+        kStopping,
         kStopped
     };
 
