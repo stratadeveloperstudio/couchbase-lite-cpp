@@ -63,7 +63,7 @@ namespace Strata {
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
         if(c4replicator_ != nullptr){
-            told_to_stop_ = true;
+            internal_status_ == Strata::SGReplicatorInternalStatus::kToldToStop;
             c4repl_stop(c4replicator_);
         }
     }
@@ -71,7 +71,7 @@ namespace Strata {
     SGReplicatorReturnStatus SGReplicator::start() {
         lock_guard<mutex> lock(replicator_lock_);
 
-        if(told_to_stop_){
+        if(internal_status_ == Strata::SGReplicatorInternalStatus::kToldToStop) {
             return SGReplicatorReturnStatus::kAboutToStop;
         }
 
@@ -82,6 +82,8 @@ namespace Strata {
         if (!isValidSGReplicatorConfiguration()) {
             return SGReplicatorReturnStatus::kConfigurationError;
         }
+
+        internal_status_ = Strata::SGReplicatorInternalStatus::kToldToStart;
 
         Encoder encoder;
         encoder.writeValue(replicator_configuration_->effectiveOptions());
@@ -118,6 +120,8 @@ namespace Strata {
             DEBUG("Replication failed.\n");
             return SGReplicatorReturnStatus::kInternalError;
         }
+
+        internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
         return SGReplicatorReturnStatus::kNoError;
     }
 
@@ -131,17 +135,15 @@ namespace Strata {
             case SGReplicatorConfiguration::ReplicatorType::kPush:
                 replicator_parameters_.push = kC4Continuous;
                 replicator_parameters_.pull = kC4Disabled;
-
                 break;
             case SGReplicatorConfiguration::ReplicatorType::kPull:
                 replicator_parameters_.push = kC4Disabled;
                 replicator_parameters_.pull = kC4Continuous;
                 break;
             default:
-            DEBUG("No replicator type has been provided.");
+                DEBUG("No replicator type has been provided.");
                 break;
         }
-
     }
 
     bool SGReplicator::isValidSGReplicatorConfiguration() {
@@ -161,15 +163,34 @@ namespace Strata {
             ((SGReplicator *) context)->on_status_changed_callback_((SGReplicator::ActivityLevel) replicator_status.level, progress);
 
             SGReplicator *ref = ((SGReplicator *) context);
-            if(ref && replicator){
-              lock_guard<mutex> lock(ref->replicator_lock_);
-              if(replicator_status.level == kC4Stopped){
-                c4repl_free(ref->c4replicator_);
-                ref->c4replicator_ = nullptr;
-                ref->told_to_stop_ = false;
-              }
+            if(ref && replicator) {
+                if(replicator_status.level == kC4Stopped) {
+                    {
+                        lock_guard<mutex> lock(ref->replicator_lock_);
+                        c4repl_free(ref->c4replicator_);
+                        ref->c4replicator_ = nullptr;
+                        ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
+                    }
+
+                    // Error code == 0 means no errors were found
+                    // In that case, do not restart since stopping was intentional
+                    if(replicator_status.error.code != 0) {
+                        ref->start();
+                    }
+                }
+                else {
+                    ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
+                }
             }
         };
+    }
+
+    SGReplicatorReturnStatus SGReplicator::restart() {
+        if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
+            this->stop();
+        }
+
+        return this->start();
     }
 
     void SGReplicator::addDocumentEndedListener(
