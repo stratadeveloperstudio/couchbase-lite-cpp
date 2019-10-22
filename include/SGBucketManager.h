@@ -31,10 +31,6 @@
 #include <SGDocument.h>
 #include <SGMutableDocument.h>
 
-// #include <fleece/FleeceImpl.hh>
-// #include <fleece/MutableArray.hh>
-// #include <fleece/MutableDict.hh>
-
 namespace Strata {
 
     // Forward declaration is required due to the circular include for SGBucket<->SGDocument.
@@ -67,25 +63,20 @@ namespace Strata {
 
         /* Replicator API */
 
-        // SGBucketReturnStatus startReplicator(std::string url,
-        //                                      std::string rep_type,
-        //                                      std::string username,
-        //                                      std::string password,
-        //                                      std::vector<std::string> channels,
-        //                                      const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &status_changed,
-        //                                      const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended,
-        //                                      const std::function<void(const std::string, const std::string)> &valid_listener);
-
         SGBucketReturnStatus startReplicator(std::string url,
-                                                   std::string rep_type,
-                                                   std::string username,
-                                                   std::string password,
-                                                   std::vector<std::string> channels,
+                                                   std::string rep_type = "pull",
+                                                   std::string username = "",
+                                                   std::string password = "",
+                                                   std::vector<std::string> channels = std::vector<std::string>(),  
                                                    const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &stat_changed = std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)>(),
                                                    const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended = std::function<void(bool, std::string, std::string, bool, bool)>(),
                                                    const std::function<void(const std::string, const std::string)> &valid_listener = std::function<void(const std::string, const std::string)>());
 
-        SGBucketReturnStatus stopReplicator();    
+        SGBucketReturnStatus setChannels(std::vector<std::string> channels);
+        
+        SGBucketReturnStatus restartReplicator();
+        
+        SGBucketReturnStatus stopReplicator();
 
     private:
         std::string bucket_name_;

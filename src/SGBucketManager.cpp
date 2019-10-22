@@ -47,6 +47,7 @@ namespace Strata {
 
     SGBucket* SGBucketManager::createBucket(const std::string &bucket_name, const std::string &bucket_path) {
         SGBucket *buc = new SGBucket(bucket_name, bucket_path);
+        if(!buc) return nullptr;
         buckets_.insert(make_pair(bucket_name, buc));
         return buc;
     }
@@ -61,7 +62,7 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucketManager::deleteBucket(const std::string &bucket_name) {
         if(!bucketExists(bucket_name)) {
-            cout << "\nBucket named " << bucket_name << " does not exist.";
+            cout << "\nBucket named \"" << bucket_name << "\" does not exist.";
             return SGBucketReturnStatus::kError;
         }
         delete buckets_.at(bucket_name);
@@ -243,9 +244,9 @@ namespace Strata {
                                                    std::string username,
                                                    std::string password,
                                                    std::vector<std::string> channels,
-                                                   const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &stat_changed /*= std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)>()*/,
-                                                   const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended /*= std::function<void(bool, std::string, std::string, bool, bool)>()*/,
-                                                   const std::function<void(const std::string, const std::string)> &valid_listener /*= std::function<void(const std::string, const std::string)>()*/) 
+                                                   const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &stat_changed,
+                                                   const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended,
+                                                   const std::function<void(const std::string, const std::string)> &valid_listener) 
     {
         if(db_ == nullptr) {
             cout << "\nBucket does not exist.\n" << endl;
@@ -305,6 +306,16 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::stopReplicator() {
         replicator_->stop();
+        return SGBucketReturnStatus::kNoError;
+    }
+
+    SGBucketReturnStatus SGBucket::setChannels(std::vector<std::string> channels) {
+        replicator_configuration_->setChannels(channels);
+        return SGBucketReturnStatus::kNoError;
+    }
+
+    SGBucketReturnStatus SGBucket::restartReplicator() {
+        replicator_->restart();
         return SGBucketReturnStatus::kNoError;
     }
 }
