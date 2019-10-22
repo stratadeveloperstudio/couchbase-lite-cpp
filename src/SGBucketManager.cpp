@@ -315,7 +315,10 @@ namespace Strata {
     }
 
     SGBucketReturnStatus SGBucket::restartReplicator() {
-        replicator_->restart();
-        return SGBucketReturnStatus::kNoError;
+        if(replicator_->restart() != SGReplicatorReturnStatus::kNoError) {
+            return SGBucketReturnStatus::kNoError;
+        } else {
+            return SGBucketReturnStatus::kError;
+        }
     }
 }

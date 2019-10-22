@@ -61,35 +61,39 @@ namespace Strata {
 
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
-        if(c4replicator_ != nullptr){
+        if(c4replicator_ != nullptr && internal_status_ != SGReplicatorInternalStatus::kStopping && internal_status_ != Strata::SGReplicatorInternalStatus::kStopped){
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
+            
             c4repl_stop(c4replicator_);
             c4repl_free(c4replicator_);
+
+            internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
+            c4replicator_ = nullptr;
         }
     }
 
-    SGReplicatorReturnStatus SGReplicator::start() { cout << "\nTop of SGReplicator::start() " << endl;
+    SGReplicatorReturnStatus SGReplicator::start() {
         lock_guard<mutex> lock(replicator_lock_);
-cout << "1" << endl;
+
         if(internal_status_ == Strata::SGReplicatorInternalStatus::kStopping) {
             return SGReplicatorReturnStatus::kAboutToStop;
         }
-cout << "2" << endl;
+
         if(c4replicator_ != nullptr){
             return SGReplicatorReturnStatus::kStillRunning;
         }
-cout << "3" << endl;
+
         if (!isValidSGReplicatorConfiguration()) {
             return SGReplicatorReturnStatus::kConfigurationError;
         }
-cout << "4" << endl;
+
         internal_status_ = Strata::SGReplicatorInternalStatus::kStarting;
 
         Encoder encoder;
         encoder.writeValue(replicator_configuration_->effectiveOptions());
         alloc_slice replicator_options = encoder.finish();
         replicator_parameters_.optionsDictFleece = replicator_options;
-cout << "5" << endl;
+
         // Callback function for outgoing revision event
         // This is used for log purposes!
         replicator_parameters_.pushFilter = [](C4String docID, C4RevisionFlags ref, FLDict body, void *context) {
@@ -99,14 +103,14 @@ cout << "5" << endl;
                   fleece_body.asString().c_str());
             return true;
         };
-cout << "6" << endl;
+
         if(on_status_changed_callback_ == nullptr){
             addChangeListener([](SGReplicator::ActivityLevel, SGReplicatorProgress progress){
                 // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
                 // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
             });
         }
-cout << "7" << endl;
+
         c4replicator_ = c4repl_new(replicator_configuration_->getDatabase()->getC4db(),
                                    replicator_configuration_->getUrlEndpoint()->getC4Address(),
                                    slice(replicator_configuration_->getUrlEndpoint()->getPath()),
@@ -114,15 +118,14 @@ cout << "7" << endl;
                                    replicator_parameters_,
                                    &c4error_
         );
-cout << "8" << endl;
+
         if(c4replicator_ == nullptr){
             logC4Error(c4error_);
             DEBUG("Replication failed.\n");
             return SGReplicatorReturnStatus::kInternalError;
         }
-cout << "9" << endl;
+
         internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
-        cout << "\nBottom of SGReplicator::start() " << endl;
         return SGReplicatorReturnStatus::kNoError;
     }
 
@@ -188,11 +191,10 @@ cout << "9" << endl;
 
     SGReplicatorReturnStatus SGReplicator::restart() {
         if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
-            this->stop(); cout << "\nReplicator was not stopped. Stopping..." << endl;
+            this->stop();
         }
-        else cout << "\nReplicator was stopped." << endl;
 
-        return this->start(); 
+        return this->start();
     }
 
     void SGReplicator::addDocumentEndedListener(
