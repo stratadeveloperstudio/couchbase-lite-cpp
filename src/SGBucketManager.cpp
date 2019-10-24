@@ -28,7 +28,6 @@
 #include "SGDatabase.h"
 #include "SGURLEndpoint.h"
 #include "SGBucketManager.h"
-// #include "SGReplicator.h"
 #include "SGReplicatorConfiguration.h"
 
 #define DEBUG(...) printf("SGBucketManager: "); printf(__VA_ARGS__)

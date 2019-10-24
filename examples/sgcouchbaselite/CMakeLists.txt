@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.8)
-project(sgcouchbaselite-playground
+project(sgcouchbaselite-example
         LANGUAGES CXX
 )
 
@@ -15,15 +15,15 @@ if(APPLE)
     endif()
 endif()
 
-add_executable(${PROJECT_NAME} sgcouchbaselite.cpp)
+add_executable(sgcouchbaselite-playground sgcouchbaselite-playground.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    CouchbaseLiteCPP
-)
+add_executable(sgcouchbaselite-buckets sgcouchbaselite-buckets.cpp)
+
+target_link_libraries(sgcouchbaselite-playground PRIVATE CouchbaseLiteCPP)
+
+target_link_libraries(sgcouchbaselite-buckets PRIVATE CouchbaseLiteCPP)
 
 if(APPLE)
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE ${FOUNDATION_LIBRARY}
-        PRIVATE ${CORE_FOUNDATION}
-    )
+    target_link_libraries(sgcouchbaselite-playground PRIVATE ${FOUNDATION_LIBRARY} PRIVATE ${CORE_FOUNDATION})
+    target_link_libraries(sgcouchbaselite-buckets PRIVATE ${FOUNDATION_LIBRARY} PRIVATE ${CORE_FOUNDATION})
 endif()
