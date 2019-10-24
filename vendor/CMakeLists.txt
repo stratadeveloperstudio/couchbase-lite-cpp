@@ -1,3 +1,10 @@
+# if(UNIX)
+#     set(CMAKE_C_COMPILER "/usr/bin/clang")
+#     set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+# endif()
+
 include(ExternalProject)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/3rd_party/include)
@@ -33,7 +40,8 @@ if(NOT WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different vendor/BLIP-Cpp/${CMAKE_STATIC_LIBRARY_PREFIX}BLIPStatic${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
         COMMAND ${CMAKE_COMMAND} -E copy_if_different vendor/sqlite3-unicodesn/${CMAKE_STATIC_LIBRARY_PREFIX}SQLite3_UnicodeSN${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
         COMMAND ${CMAKE_COMMAND} -E copy_if_different REST/${CMAKE_STATIC_LIBRARY_PREFIX}CivetWeb${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different REST/${CMAKE_STATIC_LIBRARY_PREFIX}LiteCoreREST_Static${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
+        # COMMAND ${CMAKE_COMMAND} -E copy_if_different REST/${CMAKE_STATIC_LIBRARY_PREFIX}LiteCoreREST_Static${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different vendor/mbedtls/library/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/C/include <INSTALL_DIR>/include/litecore
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/Replicator <INSTALL_DIR>/include/litecore
@@ -68,7 +76,7 @@ else()
         COMMAND ${CMAKE_COMMAND} -E copy_if_different vendor/sqlite3-unicodesn/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}SQLite3_UnicodeSN${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
         COMMAND ${CMAKE_COMMAND} -E copy_if_different vendor/mbedtls/library/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
         COMMAND ${CMAKE_COMMAND} -E copy_if_different REST/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}CivetWeb${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different REST/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}LiteCoreREST_Static${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
+        # COMMAND ${CMAKE_COMMAND} -E copy_if_different REST/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}LiteCoreREST_Static${CMAKE_STATIC_LIBRARY_SUFFIX} <INSTALL_DIR>/lib
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/C/include <INSTALL_DIR>/include/litecore
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/Replicator <INSTALL_DIR>/include/litecore
@@ -101,12 +109,12 @@ set_target_properties(cblitecore::CivetWeb PROPERTIES
 )
 add_dependencies(cblitecore::CivetWeb DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
 
-add_library(cblitecore::LiteCoreRest STATIC IMPORTED GLOBAL)
-set_target_properties(cblitecore::LiteCoreRest PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/3rd_party/include"
-    IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/3rd_party/lib/${CMAKE_STATIC_LIBRARY_PREFIX}LiteCoreREST_Static${CMAKE_STATIC_LIBRARY_SUFFIX}"
-)
-add_dependencies(cblitecore::LiteCoreRest DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
+# add_library(cblitecore::LiteCoreRest STATIC IMPORTED GLOBAL)
+# set_target_properties(cblitecore::LiteCoreRest PROPERTIES
+#     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/3rd_party/include"
+#     IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/3rd_party/lib/${CMAKE_STATIC_LIBRARY_PREFIX}LiteCoreREST_Static${CMAKE_STATIC_LIBRARY_SUFFIX}"
+# )
+# add_dependencies(cblitecore::LiteCoreRest DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
 
 add_library(cblitecore::BLIP STATIC IMPORTED GLOBAL)
 set_target_properties(cblitecore::BLIP PROPERTIES
@@ -130,6 +138,13 @@ set_target_properties(cblitecore::SQLite3_unicode PROPERTIES
 )
 add_dependencies(cblitecore::SQLite3_unicode DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
 
+add_library(cblitecore::mbedtls STATIC IMPORTED GLOBAL)
+set_target_properties(cblitecore::mbedtls PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/3rd_party/include"
+    IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/3rd_party/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}"
+)
+add_dependencies(cblitecore::mbedtls DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
+
 if(WIN32)
     add_library(cblitecore::zlib STATIC IMPORTED GLOBAL)
     set_target_properties(cblitecore::zlib PROPERTIES
@@ -138,11 +153,4 @@ if(WIN32)
         IMPORTED_LOCATION_DEBUG "${CMAKE_BINARY_DIR}/3rd_party/lib/${CMAKE_STATIC_LIBRARY_PREFIX}zlibstaticd${CMAKE_STATIC_LIBRARY_SUFFIX}"
     )
     add_dependencies(cblitecore::zlib DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
-
-    add_library(cblitecore::mbedtls STATIC IMPORTED GLOBAL)
-    set_target_properties(cblitecore::mbedtls PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/3rd_party/include"
-        IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/3rd_party/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}"
-    )
-    add_dependencies(cblitecore::mbedtls DEPENDS ${CMAKE_STATIC_LIBRARY_PREFIX}cblitecore)
 endif()

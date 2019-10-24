@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+
+if(UNIX)
+    set(CMAKE_C_COMPILER "/usr/bin/clang")
+    set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+endif()
+
 project(CouchbaseLiteCPP
         LANGUAGES CXX
         VERSION 1.0
@@ -42,6 +51,7 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC cblitecore::support
     PUBLIC cblitecore::SQLite3_unicode
 )
+
 if(WIN32)
     target_link_libraries(${PROJECT_NAME}
         PUBLIC cblitecore::zlib
@@ -50,6 +60,8 @@ if(WIN32)
 else()
     target_link_libraries(${PROJECT_NAME}
         PRIVATE z
+        PUBLIC cblitecore::mbedtls
+        PUBLIC ${CMAKE_DL_LIBS}
     )
 endif()
 
