@@ -61,6 +61,7 @@ namespace Strata {
 
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
+
         if(c4replicator_ != nullptr && internal_status_ != SGReplicatorInternalStatus::kStopping && internal_status_ != Strata::SGReplicatorInternalStatus::kStopped){
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
             
