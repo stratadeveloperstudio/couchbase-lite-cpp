@@ -238,6 +238,49 @@ namespace Strata {
         return SGBucketReturnStatus::kNoError;
     }
 
+    SGBucketReturnStatus SGBucket::searchByDocumentKey(const std::string &searching, std::vector<std::string> &doc_keys) {
+        cout << "\nInside SGBucket::searchByDocumentKey(), given key: " << searching << endl;
+        if(db_ == nullptr) {
+            cout << "\nBucket does not exist.\n" << endl;
+            return SGBucketReturnStatus::kError;
+        }
+
+        if(!db_->isOpen()) {
+            cout << "Attempted to search for document but bucket " << bucket_name_ << " is not open.";
+            return SGBucketReturnStatus::kError;
+        }
+
+        doc_keys.clear();
+        const static string json = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"LIKE\", [\"._id\", \"\"], \"" + searching + "\"]}]";
+
+        C4Error c4error_ {};
+        std::unique_ptr<C4Query, decltype(&c4query_free)> query(c4query_new(db_->getC4db(), fleece::slice(json), &c4error_), &c4query_free);
+
+        if(query != nullptr){
+            C4QueryOptions options = kC4DefaultQueryOptions;
+            std::unique_ptr<C4QueryEnumerator, decltype(&c4queryenum_free)> query_enumerator(c4query_run(query.get(), &options, c4str(nullptr), &c4error_), &c4queryenum_free);
+
+            if(query_enumerator != nullptr){
+                while (bool is_next_result_available = c4queryenum_next(query_enumerator.get(), &c4error_)) {
+                    if(is_next_result_available){
+                        fleece::slice doc_name = FLValue_AsString(FLArrayIterator_GetValueAt(&query_enumerator->columns, 0));
+                        doc_keys.push_back(doc_name.asString());
+                    }else{
+                        DEBUG("C4QueryEnumerator_Next failed to run.\n");
+                        return SGBucketReturnStatus::kError;
+                    }
+                }
+            }else{
+                DEBUG("C4QueryEnumerator failed to run.\n");
+                return SGBucketReturnStatus::kError;
+            }
+        }else{
+            DEBUG("C4Query failed to execute a query.\n");
+            return SGBucketReturnStatus::kError;
+        }
+        return SGBucketReturnStatus::kNoError;
+    }
+
     SGBucketReturnStatus SGBucket::startReplicator(std::string url,
                                                    std::string rep_type,
                                                    std::string username,

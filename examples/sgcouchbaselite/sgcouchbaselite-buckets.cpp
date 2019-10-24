@@ -116,6 +116,14 @@ int main() {
         std::cout << "\nSuccessfully updated document." << std::endl;
     }
 
+    // Search bucket for documents with keys containing "doc"
+    std::vector<std::string> doc_ids;
+    if(docs_bucket->searchByDocumentKey("doc", doc_ids) == SGBucketReturnStatus::kNoError) {
+        std::cout << "\nThe documents with keys containing \"doc\" are:";
+        for(std::string str : doc_ids) std::cout << "\nDocument ID: " << str << std::endl;
+    }
+
+/*
     // Read document "doc-2"
     std::string doc_body;
     if(docs_bucket->readDocument("doc-2", doc_body) == SGBucketReturnStatus::kNoError) {
@@ -159,7 +167,7 @@ int main() {
     if(rep_bucket_2->startReplicator("ws://localhost:4984/db", "pull", username, password, channels) == SGBucketReturnStatus::kNoError) {
         std::cout << "\nSuccessfully started replicator. (2)" << std::endl;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
     // Call with all three listeners
     SGBucket *rep_bucket_3 = rep_bucket_mgr.createBucket("Replicator Demo 3");
@@ -176,7 +184,7 @@ int main() {
         std::cout << "\nSuccessfully restarted replicator." << std::endl;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
+*/
     std::cout << "\n\n\n\n" << std::endl;
     return 0;
 }

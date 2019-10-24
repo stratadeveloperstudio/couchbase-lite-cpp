@@ -61,6 +61,8 @@ namespace Strata {
 
         SGBucketReturnStatus readContents(std::unordered_map<std::string, std::string> &contents);
 
+        SGBucketReturnStatus searchByDocumentKey(const std::string &searching, std::vector<std::string> &doc_keys);
+
         /* Replicator API */
 
         SGBucketReturnStatus startReplicator(std::string url,
