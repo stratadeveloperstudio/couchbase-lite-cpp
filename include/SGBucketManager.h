@@ -53,6 +53,8 @@ namespace Strata {
 
         SGBucketReturnStatus readDocument(const std::string &doc_name, std::string &json_body);
 
+        SGBucketReturnStatus readDocument(const std::vector<std::string> &doc_name, std::vector<std::string> &json_body);
+
         SGBucketReturnStatus deleteDocument(const std::string &doc_name);
 
         /* Additional database operations */
@@ -61,7 +63,11 @@ namespace Strata {
 
         SGBucketReturnStatus readContents(std::unordered_map<std::string, std::string> &contents);
 
-        SGBucketReturnStatus searchByDocumentKey(const std::string &searching, std::vector<std::string> &doc_keys);
+        SGBucketReturnStatus rawQuery(const std::string &json_query, std::vector<std::string> &doc_keys);
+
+        SGBucketReturnStatus searchByDocumentID(const std::string &key, std::vector<std::string> &doc_keys);
+
+        SGBucketReturnStatus searchByDocumentField(const std::string &json_query, std::vector<std::string> &doc_keys);
 
         /* Replicator API */
 

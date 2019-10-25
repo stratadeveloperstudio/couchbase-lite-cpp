@@ -29,9 +29,14 @@
 #include "SGFleece.h"
 #include "SGCouchBaseLite.h"
 
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
+
 using namespace fleece;
 using namespace fleece::impl;
 using namespace Strata;
+using namespace rapidjson;
 
 #define DEBUG(...) printf("TEST SGLiteCore: "); printf(__VA_ARGS__)
 
@@ -67,7 +72,7 @@ int main() {
 
     // Create a bucket manager
     SGBucketManager bucket_mgr_1;
-
+/*
     // Inside the bucket_manager, create a bucket called "Bucket One"
     SGBucket *bucket_1 = bucket_mgr_1.createBucket("Bucket One");
 
@@ -116,14 +121,13 @@ int main() {
         std::cout << "\nSuccessfully updated document." << std::endl;
     }
 
-    // Search bucket for documents with keys containing "doc"
+    // Search bucket for documents with ID containing "doc"
     std::vector<std::string> doc_ids;
-    if(docs_bucket->searchByDocumentKey("doc", doc_ids) == SGBucketReturnStatus::kNoError) {
+    if(docs_bucket->searchByDocumentID("doc", doc_ids) == SGBucketReturnStatus::kNoError) {
         std::cout << "\nThe documents with keys containing \"doc\" are:";
         for(std::string str : doc_ids) std::cout << "\nDocument ID: " << str << std::endl;
     }
 
-/*
     // Read document "doc-2"
     std::string doc_body;
     if(docs_bucket->readDocument("doc-2", doc_body) == SGBucketReturnStatus::kNoError) {
@@ -136,7 +140,7 @@ int main() {
     }
 
     // Get all document IDs in this bucket
-    std::vector<std::string> doc_ids;
+    doc_ids.clear();
     if(docs_bucket->getDocumentKeys(doc_ids) == SGBucketReturnStatus::kNoError) {
         std::cout << "\nSuccessfully got all document keys: ";
         for(std::string str : doc_ids) std::cout << "\nDocument ID: " << str << std::endl;
@@ -148,7 +152,57 @@ int main() {
         std::cout << "\nSuccessfully got all contents: ";
         for(auto pair : doc_contents) std::cout << "\nDocument ID: " << pair.first << ", body: " << pair.second << std::endl;
     }
+*/
+    SGBucket *query = bucket_mgr_1.createBucket("Query Example 1");
 
+    std::string DocWithChannelOne = R"foo(
+    {
+        "name": "Nimbus",
+        "channels": "chan1"
+    }
+    )foo";
+
+    std::string DocWithChannelsOneAndTwo = R"foo(
+    {
+        "name": "Hall",
+        "channels": ["chan1", "chan2"]
+    }
+    )foo";
+   
+    query->createDocument(std::make_pair("Document With Channel One", DocWithChannelOne));
+    query->createDocument(std::make_pair("Document With Channels One And Two", DocWithChannelsOneAndTwo));
+
+    // Which documents contain "chan1" in the "channels" field?
+    std::string query_data = "{\"field\":\"channels\",\"pattern\":\"chan1\"}";
+    std::vector<std::string> vec = {};
+
+    // if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
+    //     std::cout << "\nThe documents with keys containing " + query_data + " are:";
+    //     for(std::string str : vec) std::cout << "\nDocument ID: " << str << std::endl;
+    //     // Displays "Document With Channel One" and "Document With Channels One And Two"
+    // }
+
+    // Which documents contain "chan2" in the "channels" field?
+    query_data = "{\"field\":\"channels\",\"pattern\":\"chan2\"}";
+    vec.clear();
+
+    // if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
+    //     std::cout << "\nThe documents with keys containing " + query_data + " are:";
+    //     for(std::string str : vec) std::cout << "\nDocument ID: " << str << std::endl;
+    //     // Displays "Document With Channels One And Two"
+    // }
+
+    // Using the wildcard symbol "%"
+    // Which documents contain "chan%" in the "channels" field?
+    query_data = "{\"field\":\"channels\",\"pattern\":\"chan%\"}";
+    vec.clear();
+
+    if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
+        std::cout << "\nThe documents with keys containing " + query_data + " are:";
+        for(std::string str : vec) std::cout << "\nDocument ID: " << str << std::endl;
+        // Displays "Document With Channel One" and "Document With Channels One And Two"
+    }
+/*
     // Below Replicator API
 
     // Basic call
