@@ -67,9 +67,7 @@ private:
 
 int main(){
 
-
-    //SGDatabase sgDatabase("db2", "/Users/zbgd3f/");
-    // Default db location will be current location location
+    // Default db location will be current location
     SGDatabase sgDatabase("db2");
 
     DEBUG("Database will be stored in: %s\n", sgDatabase.getDBPath().c_str());

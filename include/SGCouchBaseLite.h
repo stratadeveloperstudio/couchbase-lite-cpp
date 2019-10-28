@@ -32,5 +32,6 @@
 #include "SGReplicatorConfiguration.h"
 #include "SGURLEndpoint.h"
 #include "SGAuthenticator.h"
+#include "SGBucketManager.h"
 
 #endif //SGCOUCHBASELITE_H

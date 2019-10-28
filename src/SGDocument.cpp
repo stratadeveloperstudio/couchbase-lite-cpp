@@ -24,6 +24,7 @@
 
 #include <string>
 #include "SGDocument.h"
+#include "SGBucketManager.h"
 
 #define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
 using fleece::impl::Value;
@@ -37,6 +38,12 @@ namespace Strata {
 
     SGDocument::SGDocument(SGDatabase *database, const std::string &docId) {
         setC4document(database->getDocumentById(docId));
+        setId(docId);
+        initMutableDict();
+    }
+
+    SGDocument::SGDocument(SGBucket *bucket, const std::string &docId) {
+        setC4document(bucket->db_->getDocumentById(docId));
         setId(docId);
         initMutableDict();
     }
