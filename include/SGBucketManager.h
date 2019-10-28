@@ -64,19 +64,19 @@ namespace Strata {
         /* Replicator API */
 
         SGBucketReturnStatus startReplicator(std::string url,
-                                                   std::string rep_type = "pull",
-                                                   std::string username = "",
-                                                   std::string password = "",
-                                                   std::vector<std::string> channels = std::vector<std::string>(),  
-                                                   const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &stat_changed = std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)>(),
-                                                   const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended = std::function<void(bool, std::string, std::string, bool, bool)>(),
-                                                   const std::function<void(const std::string, const std::string)> &valid_listener = std::function<void(const std::string, const std::string)>());
+                                             SGReplicatorConfiguration::ReplicatorType rep_type = SGReplicatorConfiguration::ReplicatorType::kPull,
+                                             std::string username = "",
+                                             std::string password = "",
+                                             std::vector<std::string> channels = std::vector<std::string>(),  
+                                             const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)> &stat_changed = std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress)>(),
+                                             const std::function<void(bool, std::string, std::string, bool, bool)> &document_ended = std::function<void(bool, std::string, std::string, bool, bool)>(),
+                                             const std::function<void(const std::string, const std::string)> &valid_listener = std::function<void(const std::string, const std::string)>());
 
-        SGBucketReturnStatus setChannels(std::vector<std::string> channels);
+        void setChannels(std::vector<std::string> channels);
         
-        SGBucketReturnStatus restartReplicator();
+        void restartReplicator();
         
-        SGBucketReturnStatus stopReplicator();
+        void stopReplicator();
 
     private:
         std::string bucket_name_;

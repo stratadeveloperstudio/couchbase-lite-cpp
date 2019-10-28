@@ -156,27 +156,30 @@ int main() {
     std::string username = "";
     std::string password = "";
     std::vector<std::string> channels = {"chan1"};
-    if(rep_bucket_2->startReplicator("ws://localhost:4984/db", "pull", username, password, channels) == SGBucketReturnStatus::kNoError) {
+    if(rep_bucket_2->startReplicator("ws://localhost:4984/db", SGReplicatorConfiguration::ReplicatorType::kPull, username, password, channels) == SGBucketReturnStatus::kNoError) {
         std::cout << "\nSuccessfully started replicator. (2)" << std::endl;
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // Change channels and restart replicator for rep_bucket_2
+    channels = {"chan2"};
+    rep_bucket_2->setChannels(channels);
+    rep_bucket_2->restartReplicator();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // Call with all three listeners
     SGBucket *rep_bucket_3 = rep_bucket_mgr.createBucket("Replicator Demo 3");
     MiniHCS miniHCS(rep_bucket_3);
-    if(rep_bucket_3->startReplicator("ws://localhost:4984/db", "pushpull", "", "", std::vector<std::string> (), onStatusChanged, onDocumentEnded, bind(&MiniHCS::onValidate, &miniHCS, std::placeholders::_1, std::placeholders::_2)) == SGBucketReturnStatus::kNoError) {
+    if(rep_bucket_3->startReplicator("ws://localhost:4984/db", SGReplicatorConfiguration::ReplicatorType::kPushAndPull, "", "", std::vector<std::string> (), onStatusChanged, onDocumentEnded, bind(&MiniHCS::onValidate, &miniHCS, std::placeholders::_1, std::placeholders::_2)) == SGBucketReturnStatus::kNoError) {
         std::cout << "\nSuccessfully started replicator. (3)" << std::endl;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    // Change channels and restart replicator for rep_bucket_2
-    channels = {"chan1", "chan2"};
-    rep_bucket_2->setChannels(channels);
-    if(rep_bucket_2->restartReplicator() == SGBucketReturnStatus::kNoError) {
-        std::cout << "\nSuccessfully restarted replicator." << std::endl;
-    }
+    rep_bucket_1->stopReplicator();
+    rep_bucket_2->stopReplicator();
+    rep_bucket_3->stopReplicator();
+
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    std::cout << "\n\n\n\n" << std::endl;
     return 0;
 }
