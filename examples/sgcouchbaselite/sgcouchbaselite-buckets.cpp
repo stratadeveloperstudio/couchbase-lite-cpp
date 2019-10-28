@@ -72,7 +72,7 @@ int main() {
 
     // Create a bucket manager
     SGBucketManager bucket_mgr_1;
-/*
+
     // Inside the bucket_manager, create a bucket called "Bucket One"
     SGBucket *bucket_1 = bucket_mgr_1.createBucket("Bucket One");
 
@@ -152,7 +152,9 @@ int main() {
         std::cout << "\nSuccessfully got all contents: ";
         for(auto pair : doc_contents) std::cout << "\nDocument ID: " << pair.first << ", body: " << pair.second << std::endl;
     }
-*/
+
+    // Below Query API
+
     SGBucket *query = bucket_mgr_1.createBucket("Query Example 1");
 
     std::string DocWithChannelOne = R"foo(
@@ -176,33 +178,22 @@ int main() {
     std::string query_data = "{\"field\":\"channels\",\"pattern\":\"chan1\"}";
     std::vector<std::string> vec = {};
 
-    // if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
-    //     std::cout << "\nThe documents with keys containing " + query_data + " are:";
-    //     for(std::string str : vec) std::cout << "\nDocument ID: " << str << std::endl;
-    //     // Displays "Document With Channel One" and "Document With Channels One And Two"
-    // }
+    if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
+        std::cout << "\nThe documents with keys containing " + query_data + " are: ";
+        for(std::string str : vec) std::cout << "\"" << str << "\" "; std::cout << "\n" << std::endl;
+        // Displays "Document With Channel One" and "Document With Channels One And Two"
+    }
 
     // Which documents contain "chan2" in the "channels" field?
     query_data = "{\"field\":\"channels\",\"pattern\":\"chan2\"}";
     vec.clear();
 
-    // if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
-    //     std::cout << "\nThe documents with keys containing " + query_data + " are:";
-    //     for(std::string str : vec) std::cout << "\nDocument ID: " << str << std::endl;
-    //     // Displays "Document With Channels One And Two"
-    // }
-
-    // Using the wildcard symbol "%"
-    // Which documents contain "chan%" in the "channels" field?
-    query_data = "{\"field\":\"channels\",\"pattern\":\"chan%\"}";
-    vec.clear();
-
     if(query->searchByDocumentField(query_data, vec) == SGBucketReturnStatus::kNoError) {
-        std::cout << "\nThe documents with keys containing " + query_data + " are:";
-        for(std::string str : vec) std::cout << "\nDocument ID: " << str << std::endl;
-        // Displays "Document With Channel One" and "Document With Channels One And Two"
+        std::cout << "\nThe documents with keys containing " + query_data + " are: ";
+        for(std::string str : vec) std::cout << "\"" << str << "\" "; std::cout << "\n" << std::endl;
+        // Displays "Document With Channels One And Two"
     }
-/*
+
     // Below Replicator API
 
     // Basic call
@@ -242,7 +233,7 @@ int main() {
     rep_bucket_3->stopReplicator();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-*/
+
     std::cout << "\n\n\n\n" << std::endl;
     return 0;
 }

@@ -63,8 +63,6 @@ namespace Strata {
 
         SGBucketReturnStatus readContents(std::unordered_map<std::string, std::string> &contents);
 
-        SGBucketReturnStatus rawQuery(const std::string &json_query, std::vector<std::string> &doc_keys);
-
         SGBucketReturnStatus searchByDocumentID(const std::string &key, std::vector<std::string> &doc_keys);
 
         SGBucketReturnStatus searchByDocumentField(const std::string &json_query, std::vector<std::string> &doc_keys);
@@ -106,6 +104,8 @@ namespace Strata {
         }
 
         friend SGDocument;
+
+        SGBucketReturnStatus rawQuery(const std::string &json_query, std::vector<std::string> &doc_keys);
     };
 
     class SGBucketManager {

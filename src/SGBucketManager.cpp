@@ -220,12 +220,12 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::readDocument(const std::vector<std::string> &doc_name, std::vector<std::string> &json_body) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to read document but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to read document but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -233,7 +233,7 @@ namespace Strata {
             SGDocument doc(db_.get(), doc_name_str);
 
             if(!doc.exist()) {
-                cout << "Document with ID = '" + doc_name_str + "' does not exist. Cannot read.";
+                DEBUG("Document with provided ID does not exist. Cannot read.\n");
                 return SGBucketReturnStatus::kError;
             }
 
@@ -268,17 +268,17 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::rawQuery(const string &json_query, vector<string> &doc_keys) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to perform query but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to perform query but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(json_query.empty()) {
-            cout << "Empty query provided.";
+            DEBUG("Empty query provided.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -311,7 +311,7 @@ namespace Strata {
     }
 
     SGBucketReturnStatus SGBucket::searchByDocumentID(const string &key, vector<string> &doc_keys) {
-        const static string json = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"LIKE\", [\"._id\", \"\"], \"" + key + "\"]}]";
+        const string json = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"LIKE\", [\"._id\", \"\"], \"" + key + "\"]}]";
         return rawQuery(json, doc_keys);
     }
 
@@ -327,35 +327,15 @@ namespace Strata {
             return SGBucketReturnStatus::kError;
         }
 
-        // Will match all elements exactly, and they cannot be part of an array
-        const static string json1 = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"LIKE\", [\".\", \"" + field + "\"], \"" + pattern + "\"]}]";
+        // Will match elements that are not part of an array
+        const string json1 = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"LIKE\", [\".\", \"" + field + "\"], \"" + pattern + "\"]}]";
         if(rawQuery(json1, doc_keys) != SGBucketReturnStatus::kNoError) {
             return SGBucketReturnStatus::kError;
         }
 
-        // std::cout << "\nFound in first search (exact match):\n";
-        // for(std::string str : doc_keys) std::cout << "\nDocument ID: " << str << std::endl;
-
-        // doc_keys.clear();
-
         // Will match elements that are part of an array
-        const static string json2 = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"IN\", \"" + pattern + "\", [\".\", \"" + field + "\"]]}]";
-        rawQuery(json2, doc_keys);
-
-        // std::cout << "\nFound in second search (array match):\n";
-        // for(std::string str : doc_keys) std::cout << "\nDocument ID: " << str << std::endl;
-
-
-
-
-
-        // return rawQuery(json2, doc_keys);
-
-
-
-
-
-        return SGBucketReturnStatus::kNoError;
+        const string json2 = "[\"SELECT\", {\"WHAT\": [\"._id\"], \"WHERE\": [\"IN\", \"" + pattern + "\", [\".\", \"" + field + "\"]]}]";  
+        return rawQuery(json2, doc_keys);
     }
 
     SGBucketReturnStatus SGBucket::startReplicator(string url,
