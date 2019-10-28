@@ -29,14 +29,9 @@
 #include "SGFleece.h"
 #include "SGCouchBaseLite.h"
 
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
-
 using namespace fleece;
 using namespace fleece::impl;
 using namespace Strata;
-using namespace rapidjson;
 
 #define DEBUG(...) printf("TEST SGLiteCore: "); printf(__VA_ARGS__)
 
