@@ -64,7 +64,7 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucketManager::deleteBucket(const string &bucket_name) {
         if(!bucketExists(bucket_name)) {
-            cout << "\nBucket named \"" << bucket_name << "\" does not exist.";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
         delete buckets_.at(bucket_name);
@@ -85,34 +85,34 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::createDocument(const pair<string, string> &doc) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n" << endl;
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to create document but bucket " << get<1>(doc) << " is not open.";
+            DEBUG("Attempted to create document but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(get<0>(doc).empty() || get<1>(doc).empty()) {
-            cout << "ID and body contents of document may not be empty.";
+            DEBUG("ID and body contents of document may not be empty.\n");
             return SGBucketReturnStatus::kError;
         }
 
         SGMutableDocument newDoc(db_.get(), get<0>(doc));
 
         if(newDoc.exist()) {
-            cout << "A document with ID '" + get<0>(doc) + "' already exists. Modify the ID and try again.";
+            DEBUG("A document with the provided ID already exists. Modify the ID and try again.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!newDoc.setBody(get<1>(doc))) {
-            cout << "Error setting content of created document. Body must be in JSON format.";
+            DEBUG("Error setting content of created document. Body must be in JSON format.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(db_->save(&newDoc) != SGDatabaseReturnStatus::kNoError) {
-            cout << "Error saving document to database.";
+            DEBUG("Error saving document to database.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -121,30 +121,30 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::updateDocument(const string &doc_name, const string &json_body) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n" << endl;
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to create document but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to create document but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(doc_name.empty()) {
-            cout << "Received empty document ID, cannot edit.";
+            DEBUG("Received empty document ID, cannot edit.\n");
             return SGBucketReturnStatus::kError;
         }
 
         SGMutableDocument doc(db_.get(), doc_name);
 
         if(!doc.exist()) {
-            cout << "Document with ID = '" + doc_name + "' does not exist. Cannot edit.";
+            DEBUG("Document does not exist. Cannot edit.\n");
             return SGBucketReturnStatus::kError;
         }
 
         doc.setBody(json_body);
         if(db_->save(&doc) != SGDatabaseReturnStatus::kNoError) {
-            cout << "Error saving document to database.";
+            DEBUG("Error saving document to database.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -153,29 +153,29 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::deleteDocument(const string &doc_name) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n" << endl;
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to create document but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to create document but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(doc_name.empty()) {
-            cout << "Received empty document ID, cannot delete.";
+            DEBUG("Received empty document ID, cannot delete.\n");
             return SGBucketReturnStatus::kError;
         }
 
         SGDocument doc(db_.get(), doc_name);
 
         if(!doc.exist()) {
-            cout << "Document with ID = '" + doc_name + "' does not exist. Cannot delete.";
+            DEBUG("Document does not exist. Cannot delete.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(db_->deleteDocument(&doc) != SGDatabaseReturnStatus::kNoError) {
-            cout << "Error deleting document " + doc_name + ".";
+            DEBUG("Error deleting document.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -184,12 +184,12 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::getDocumentKeys(vector<string> &doc_keys) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to create document but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to create document but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -198,19 +198,19 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::readDocument(const string &doc_name, string &json_body) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to read document but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to read document but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
         SGDocument doc(db_.get(), doc_name);
 
         if(!doc.exist()) {
-            cout << "Document with ID = '" + doc_name + "' does not exist. Cannot read.";
+            DEBUG("Document does not exist. Cannot read.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -245,12 +245,12 @@ namespace Strata {
 
     SGBucketReturnStatus SGBucket::readContents(unordered_map<string, string> &contents) {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to read contents but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to read contents but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -359,7 +359,7 @@ namespace Strata {
     }
 
     SGBucketReturnStatus SGBucket::startReplicator(string url,
-                                                   string rep_type,
+                                                   SGReplicatorConfiguration::ReplicatorType rep_type,
                                                    string username,
                                                    string password,
                                                    vector<string> channels,
@@ -368,19 +368,19 @@ namespace Strata {
                                                    const function<void(const string, const string)> &valid_listener) 
     {
         if(db_ == nullptr) {
-            cout << "\nBucket does not exist.\n";
+            DEBUG("Bucket does not exist.\n");
             return SGBucketReturnStatus::kError;
         }
 
         if(!db_->isOpen()) {
-            cout << "Attempted to read contents but bucket " << bucket_name_ << " is not open.";
+            DEBUG("Attempted to read contents but bucket is not open.\n");
             return SGBucketReturnStatus::kError;
         }
 
         url_endpoint_ = unique_ptr<SGURLEndpoint>(new SGURLEndpoint(url));
 
         if(!url_endpoint_->init()){
-            cout << "Invalid URL endpoint.";
+            DEBUG("Invalid URL endpoint.\n");
             return SGBucketReturnStatus::kError;
         }
 
@@ -391,22 +391,11 @@ namespace Strata {
             replicator_configuration_->setAuthenticator(basic_authenticator_.get());
         }
 
-        if(rep_type == "pull") {
-            replicator_configuration_->setReplicatorType(SGReplicatorConfiguration::ReplicatorType::kPull);
-        } else if(rep_type == "push") {
-            replicator_configuration_->setReplicatorType(SGReplicatorConfiguration::ReplicatorType::kPush);
-        } else if(rep_type == "pushpull") {
-            replicator_configuration_->setReplicatorType(SGReplicatorConfiguration::ReplicatorType::kPushAndPull);
-        } else {
-            cout << "Unidentified replicator type selected. Use \"push\", \"pull\", or \"pushpull\".";
-            return SGBucketReturnStatus::kError;
-        }
-
+        replicator_configuration_->setReplicatorType(rep_type);
         replicator_configuration_->setChannels(channels);
         replicator_ = unique_ptr<SGReplicator>(new SGReplicator(replicator_configuration_.get()));
-
+        
         if(stat_changed) replicator_->addChangeListener(stat_changed);
-
         if(document_ended) replicator_->addDocumentEndedListener(document_ended);
 
         if(valid_listener) {
@@ -416,28 +405,22 @@ namespace Strata {
         }
 
         if(replicator_->start() != SGReplicatorReturnStatus::kNoError) {
-            cout << "\nProblem starting the replicator.";
+            DEBUG("Problems starting the replicator.\n");
             return SGBucketReturnStatus::kError;
         }
 
         return SGBucketReturnStatus::kNoError;
     }
 
-    SGBucketReturnStatus SGBucket::stopReplicator() {
+    void SGBucket::stopReplicator() {
         replicator_->stop();
-        return SGBucketReturnStatus::kNoError;
     }
 
-    SGBucketReturnStatus SGBucket::setChannels(vector<string> channels) {
+    void SGBucket::setChannels(vector<string> channels) {
         replicator_configuration_->setChannels(channels);
-        return SGBucketReturnStatus::kNoError;
     }
 
-    SGBucketReturnStatus SGBucket::restartReplicator() {
-        if(replicator_->restart() != SGReplicatorReturnStatus::kNoError) {
-            return SGBucketReturnStatus::kNoError;
-        } else {
-            return SGBucketReturnStatus::kError;
-        }
+    void SGBucket::restartReplicator() {
+        replicator_->restart();
     }
 }

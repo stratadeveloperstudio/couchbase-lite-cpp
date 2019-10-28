@@ -52,6 +52,7 @@ namespace Strata {
 
     SGReplicator::~SGReplicator() {
         stop();
+        c4repl_free(c4replicator_);
     }
 
     SGReplicator::SGReplicator(SGReplicatorConfiguration *replicator_configuration): SGReplicator() {
@@ -62,14 +63,9 @@ namespace Strata {
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
 
-        if(c4replicator_ != nullptr && internal_status_ != SGReplicatorInternalStatus::kStopping && internal_status_ != Strata::SGReplicatorInternalStatus::kStopped){
+        if(c4replicator_ != nullptr){
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
-            
             c4repl_stop(c4replicator_);
-            c4repl_free(c4replicator_);
-
-            internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
-            c4replicator_ = nullptr;
         }
     }
 
@@ -127,6 +123,7 @@ namespace Strata {
         }
 
         internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
+        manual_restart_ = false;
         return SGReplicatorReturnStatus::kNoError;
     }
 
@@ -169,7 +166,7 @@ namespace Strata {
 
             SGReplicator *ref = ((SGReplicator *) context);
             if(ref && replicator) {
-                if(replicator_status.level == kC4Stopped) {
+                if(replicator_status.level == kC4Stopped) { 
                     {
                         lock_guard<mutex> lock(ref->replicator_lock_);
                         c4repl_free(ref->c4replicator_);
@@ -179,7 +176,7 @@ namespace Strata {
 
                     // Error code == 0 means no errors were found
                     // In that case, do not restart since stopping was intentional
-                    if(replicator_status.error.code != 0) {
+                    if(replicator_status.error.code != 0 || ref->manual_restart_ == true) {
                         ref->start();
                     }
                 }
@@ -190,12 +187,12 @@ namespace Strata {
         };
     }
 
-    SGReplicatorReturnStatus SGReplicator::restart() {
+    void SGReplicator::restart() {
+        manual_restart_ = true;
+        
         if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
             this->stop();
         }
-
-        return this->start();
     }
 
     void SGReplicator::addDocumentEndedListener(
