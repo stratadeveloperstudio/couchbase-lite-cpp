@@ -110,6 +110,9 @@ namespace Strata {
         void addValidationListener(
                 const std::function<void(const std::string &doc_id, const std::string &json_body)> &callback);
 
+        SGReplicatorConfiguration* getReplicatorConfig() {
+            return replicator_configuration_;
+        }
 
     private:
         C4Replicator *c4replicator_{nullptr};

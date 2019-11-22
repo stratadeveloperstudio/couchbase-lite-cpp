@@ -34,6 +34,12 @@ using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
 
+
+
+//////////////
+#include <iostream>
+#include "SGMutableDocument.h"
+
 namespace Strata {
     SGReplicator::SGReplicator() {
         replicator_parameters_.callbackContext = this;
@@ -100,6 +106,15 @@ namespace Strata {
 
         if(on_status_changed_callback_ == nullptr){
             addChangeListener([](SGReplicator::ActivityLevel, SGReplicatorProgress progress){
+                // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
+                // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
+            });
+        }
+
+        //////// VICTOR
+        if(on_document_error_callback_ == nullptr){
+            addDocumentEndedListener([](bool pushing, std::string doc_id, std::string error_message, bool is_error,
+                                     bool error_is_transient){
                 // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
                 // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
             });
@@ -184,6 +199,57 @@ namespace Strata {
                                                     C4Error error,
                                                     bool errorIsTransient,
                                                     void *context) {
+
+            std::cout << "\n[VICTOR] received document: " << slice(docID).asString() << ", is conflict: " << (flags == kRevIsConflict ? "YES" : "NO") << "\n" << std::endl;
+
+            // if a conflict is found, delete local copy of document.
+            if(flags == kRevIsConflict) {
+                auto x = ((SGReplicator *) context)->getReplicatorConfig();
+
+                SGDatabase* sgdb = x->getDatabase(); //->getC4db();
+
+                C4Database* db = sgdb->getC4db();
+
+                SGDocument d(sgdb, slice(docID).asString());
+
+                // sgdb->deleteDocument(&d);
+
+                C4Error c4err;
+
+                // C4Document *doc = c4doc_get(db, docID, 0, &c4err);
+
+                C4Document *doc = d.getC4document();
+
+                if(!doc) {
+                    std::cout << "\nDocument returned nullptr, aborting." << std::endl;
+                    return;
+                }
+                std::cout << "\nDocument returned valid pointer." << std::endl;
+
+                std::cout << "\nDocument ID afterwards: " << slice(doc->docID).asString() << std::endl;
+
+                if(c4db_beginTransaction(db, &c4err)) std::cout << "\nc4db_beginTransaction returned TRUE"; else std::cout << "\nc4db_beginTransaction returned FALSE";
+                if(c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4err)) std::cout << "\nc4doc_resolveConflict returned TRUE"; else std::cout << "\nc4doc_resolveConflict returned FALSE";
+                if(c4doc_save(doc, 200, &c4err)) std::cout << "\nc4doc_save returned TRUE"; else std::cout << "\nc4doc_save returned FALSE";
+                if(c4db_endTransaction(db, true, &c4err)) std::cout << "\nc4db_endTransaction returned TRUE"; else std::cout << "\nc4db_endTransaction returned FALSE";  
+
+                // if(c4doc_selectRevision(doc, revID, 1, &c4err)) {
+                //     std::cout << "\nSelect revision returned TRUE, saving w/ revID " << slice(revID).asString() << ".\n";
+                //     if(c4db_beginTransaction(db, &c4err)) std::cout << "\nc4db_beginTransaction returned TRUE"; else std::cout << "\nc4db_beginTransaction returned FALSE";
+                //     // if(c4doc_loadRevisionBody(doc, &c4err)) std::cout << "\nc4doc_loadRevisionBody returned TRUE"; else std::cout << "\nc4doc_loadRevisionBody returned FALSE";
+                //     // if(c4doc_save(doc, 200, &c4err)) std::cout << "\nc4doc_save returned TRUE"; else std::cout << "\nc4doc_save returned FALSE";
+                //     // if(c4db_endTransaction(db, true, &c4err)) std::cout << "\nc4db_endTransaction returned TRUE"; else std::cout << "\nc4db_endTransaction returned FALSE";  
+
+
+                    
+                     
+                // }
+                // else std::cout << "\nSelect revision returned FALSE.\n";
+
+                // std::cout << "\nDeleted conflicting document " << slice(docID).asString() << std::endl;
+            }
+
+        
 
             alloc_slice error_message = c4error_getDescription(error);
             ((SGReplicator *) context)->on_document_error_callback_(pushing, slice(docID).asString(),
