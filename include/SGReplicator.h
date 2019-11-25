@@ -25,11 +25,6 @@
 #ifndef SGREPLICATOR_H
 #define SGREPLICATOR_H
 
-#include <functional>
-#include <future>
-#include <thread>
-#include <iostream>
-
 #include <litecore/c4.h>
 
 #include "SGDatabase.h"
@@ -46,7 +41,14 @@ namespace Strata {
         kStillRunning,
         kConfigurationError,
         kInternalError,
-        kAboutToStop, // Asked to stop the replicator while it's running.
+        kAboutToStop // Asked to stop the replicator while it's running.
+    };
+
+    enum class SGReplicatorInternalStatus {
+        kStarting,
+        kStarted,
+        kStopping,
+        kStopped
     };
 
     std::ostream& operator << (std::ostream& os, const SGReplicatorReturnStatus& return_status);
@@ -94,6 +96,11 @@ namespace Strata {
         */
         void stop();
 
+        /** SGReplicator restart.
+        * @brief Attempts to restart the replicator.
+        */
+        SGReplicatorReturnStatus restart();
+
         /** SGReplicator addChangeListener.
         * @brief Adds the callback function to the replicator's onStatusChanged event.
         * @param callback The callback function.
@@ -130,7 +137,7 @@ namespace Strata {
         * @brief Returns the current conflict resolution policy for this replicator.
         */
         ConflictResolutionPolicy getConflictResolutionPolicy();
-
+      
     private:
         C4Replicator *c4replicator_{nullptr};
         SGReplicatorConfiguration *replicator_configuration_{nullptr};
@@ -153,8 +160,8 @@ namespace Strata {
         bool isValidSGReplicatorConfiguration();
 
         // c4repl_stop is async and we need to track it so we don't endup with running another replicator.
-        // When Activity status changed to stopped then we can free the replicatior.
-        bool told_to_stop_ {false};
+        // When Activity status changed to stopped then we can free the replicator.
+        SGReplicatorInternalStatus internal_status_ = SGReplicatorInternalStatus::kStopped;
     };
 }
 
