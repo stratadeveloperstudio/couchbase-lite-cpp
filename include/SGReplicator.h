@@ -121,7 +121,7 @@ namespace Strata {
         SGReplicatorConfiguration* getReplicatorConfig();
 
         /** SGReplicator setConflictResolutionPolicy.
-        * @brief Set the conflict resolution policy for this replicator.
+        * @brief Set the conflict resolution policy for this replicator. This option should be set before the replicator is started.
         * @param policy The desired conflict resolution policy.
         */
         void setConflictResolutionPolicy(const ConflictResolutionPolicy &policy);

@@ -101,15 +101,15 @@ namespace Strata {
         if(on_status_changed_callback_ == nullptr){
             addChangeListener([](SGReplicator::ActivityLevel, SGReplicatorProgress progress){
                 // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
-                // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
+                // The onStatusChanged needs to run regardless if addChangeListener is used by the application or not.
             });
         }
 
-        if(on_document_error_callback_ == nullptr && policy_ == ConflictResolutionPolicy::kResolveToRemoteRevision) {
+        if(policy_ == ConflictResolutionPolicy::kResolveToRemoteRevision) {
             addDocumentEndedListener([](bool pushing, std::string doc_id, std::string error_message, bool is_error,
                                      bool error_is_transient){
-                // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
-                // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
+                // placeholder to make sure replicator_parameters_.onDocumentEnded has a callback if the "ResolveToRemoteRevision" policy is selected.
+                // If the "ResolveToRemoteRevision" policy is selected, onDocumentEnded needs to run regardless if addDocumentEndedListener is used by the application or not.
             });
         }
 
