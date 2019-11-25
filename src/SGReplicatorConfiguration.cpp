@@ -29,9 +29,6 @@ using namespace fleece;
 using namespace fleece::impl;
 #define DEBUG(...) printf("SGReplicatorConfiguration: "); printf(__VA_ARGS__)
 
-///
-#include <iostream>
-
 namespace Strata {
     SGReplicatorConfiguration::SGReplicatorConfiguration() {
         replicator_type_ = ReplicatorType::kPull;
