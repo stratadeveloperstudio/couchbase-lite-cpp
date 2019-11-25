@@ -52,6 +52,8 @@ namespace Strata {
 
     SGReplicator::~SGReplicator() {
         stop();
+        c4repl_free(c4replicator_);
+        c4replicator_ = nullptr;
     }
 
     SGReplicator::SGReplicator(SGReplicatorConfiguration *replicator_configuration): SGReplicator() {
@@ -64,7 +66,6 @@ namespace Strata {
         if(c4replicator_ != nullptr){
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
             c4repl_stop(c4replicator_);
-            c4repl_free(c4replicator_);
         }
     }
 
@@ -254,7 +255,7 @@ namespace Strata {
                     return;
                 }
 
-                DEBUG("Resolved conflict in document %s to the remote revision.\n", slice(docID).asString().c_str());
+                DEBUG("Resolved conflict in document '%s' to the remote revision.\n", slice(docID).asString().c_str());
             }
 
             alloc_slice error_message = c4error_getDescription(error);
