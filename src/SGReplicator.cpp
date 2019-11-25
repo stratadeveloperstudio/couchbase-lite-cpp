@@ -111,8 +111,7 @@ namespace Strata {
             });
         }
 
-        //////// VICTOR
-        if(on_document_error_callback_ == nullptr){
+        if(on_document_error_callback_ == nullptr && policy_ == ConflictResolutionPolicy::kResolveToRemoteRevision) {
             addDocumentEndedListener([](bool pushing, std::string doc_id, std::string error_message, bool is_error,
                                      bool error_is_transient){
                 // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
@@ -200,56 +199,48 @@ namespace Strata {
                                                     bool errorIsTransient,
                                                     void *context) {
 
-            std::cout << "\n[VICTOR] received document: " << slice(docID).asString() << ", is conflict: " << (flags == kRevIsConflict ? "YES" : "NO") << "\n" << std::endl;
+            if(flags == kRevIsConflict && ((SGReplicator *) context)->getConflictResolutionPolicy() == ConflictResolutionPolicy::kResolveToRemoteRevision) {
+                C4Database* db = ((SGReplicator *) context)->getReplicatorConfig()->getDatabase()->getC4db();
+                C4Error c4error;
 
-            // if a conflict is found, delete local copy of document.
-            if(flags == kRevIsConflict) {
-                auto x = ((SGReplicator *) context)->getReplicatorConfig();
-
-                SGDatabase* sgdb = x->getDatabase(); //->getC4db();
-
-                C4Database* db = sgdb->getC4db();
-
-                SGDocument d(sgdb, slice(docID).asString());
-
-                // sgdb->deleteDocument(&d);
-
-                C4Error c4err;
-
-                // C4Document *doc = c4doc_get(db, docID, 0, &c4err);
-
-                C4Document *doc = d.getC4document();
-
-                if(!doc) {
-                    std::cout << "\nDocument returned nullptr, aborting." << std::endl;
+                if(!c4db_beginTransaction(db, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4db_beginTransaction Error\n");
                     return;
                 }
-                std::cout << "\nDocument returned valid pointer." << std::endl;
 
-                std::cout << "\nDocument ID afterwards: " << slice(doc->docID).asString() << std::endl;
+                C4Document *doc = c4doc_get(db, slice(docID), true, &c4error);
 
-                if(c4db_beginTransaction(db, &c4err)) std::cout << "\nc4db_beginTransaction returned TRUE"; else std::cout << "\nc4db_beginTransaction returned FALSE";
-                if(c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4err)) std::cout << "\nc4doc_resolveConflict returned TRUE"; else std::cout << "\nc4doc_resolveConflict returned FALSE";
-                if(c4doc_save(doc, 200, &c4err)) std::cout << "\nc4doc_save returned TRUE"; else std::cout << "\nc4doc_save returned FALSE";
-                if(c4db_endTransaction(db, true, &c4err)) std::cout << "\nc4db_endTransaction returned TRUE"; else std::cout << "\nc4db_endTransaction returned FALSE";  
+                if(!doc) {
+                    DEBUG("Document returned nullptr, aborting.\n");
+                    return;
+                }
 
-                // if(c4doc_selectRevision(doc, revID, 1, &c4err)) {
-                //     std::cout << "\nSelect revision returned TRUE, saving w/ revID " << slice(revID).asString() << ".\n";
-                //     if(c4db_beginTransaction(db, &c4err)) std::cout << "\nc4db_beginTransaction returned TRUE"; else std::cout << "\nc4db_beginTransaction returned FALSE";
-                //     // if(c4doc_loadRevisionBody(doc, &c4err)) std::cout << "\nc4doc_loadRevisionBody returned TRUE"; else std::cout << "\nc4doc_loadRevisionBody returned FALSE";
-                //     // if(c4doc_save(doc, 200, &c4err)) std::cout << "\nc4doc_save returned TRUE"; else std::cout << "\nc4doc_save returned FALSE";
-                //     // if(c4db_endTransaction(db, true, &c4err)) std::cout << "\nc4db_endTransaction returned TRUE"; else std::cout << "\nc4db_endTransaction returned FALSE";  
+                // Revision to keep and revision to discard are the same, so nothing to be done 
+                if(slice(revID) == slice(doc->revID)) {
+                    return;
+                }
 
+                if(!c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4error)) {    
+                    logC4Error(c4error);
+                    DEBUG("c4doc_resolveConflict Error\n");
+                    return;
+                }
 
-                    
-                     
-                // }
-                // else std::cout << "\nSelect revision returned FALSE.\n";
+                if(!c4doc_save(doc, 20, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4doc_save Error\n");
+                    return;
+                }
 
-                // std::cout << "\nDeleted conflicting document " << slice(docID).asString() << std::endl;
+                if(!c4db_endTransaction(db, true, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4db_endTransaction Error\n");
+                    return;
+                }
+
+                DEBUG("Resolved conflict in document %s to the remote revision.\n", slice(docID).asString().c_str());
             }
-
-        
 
             alloc_slice error_message = c4error_getDescription(error);
             ((SGReplicator *) context)->on_document_error_callback_(pushing, slice(docID).asString(),
@@ -279,5 +270,17 @@ namespace Strata {
 
     std::ostream& operator << (std::ostream& os, const SGReplicator::ActivityLevel& activity_level){
         return os << static_cast<underlying_type<SGReplicator::ActivityLevel>::type> (activity_level);
+    }
+
+    SGReplicatorConfiguration* SGReplicator::getReplicatorConfig() {
+        return replicator_configuration_;
+    }
+
+    void SGReplicator::setConflictResolutionPolicy(const ConflictResolutionPolicy &policy) {
+        policy_ = policy;
+    }
+
+    SGReplicator::ConflictResolutionPolicy SGReplicator::getConflictResolutionPolicy() {
+        return policy_;
     }
 }

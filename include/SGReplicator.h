@@ -77,6 +77,11 @@ namespace Strata {
             kBusy
         };
 
+        enum class ConflictResolutionPolicy {
+            kDefaultBehavior,
+            kResolveToRemoteRevision
+        };
+
         friend std::ostream& operator << (std::ostream& os, const ActivityLevel& activity_level);
 
         /** SGReplicator start.
@@ -110,9 +115,21 @@ namespace Strata {
         void addValidationListener(
                 const std::function<void(const std::string &doc_id, const std::string &json_body)> &callback);
 
-        SGReplicatorConfiguration* getReplicatorConfig() {
-            return replicator_configuration_;
-        }
+        /** SGReplicator getReplicatorConfig.
+        * @brief Returns the current replicator configuration
+        */
+        SGReplicatorConfiguration* getReplicatorConfig();
+
+        /** SGReplicator setConflictResolutionPolicy.
+        * @brief Set the conflict resolution policy for this replicator.
+        * @param policy The desired conflict resolution policy.
+        */
+        void setConflictResolutionPolicy(const ConflictResolutionPolicy &policy);
+
+        /** SGReplicator getConflictResolutionPolicy.
+        * @brief Returns the current conflict resolution policy for this replicator.
+        */
+        ConflictResolutionPolicy getConflictResolutionPolicy();
 
     private:
         C4Replicator *c4replicator_{nullptr};
@@ -120,6 +137,8 @@ namespace Strata {
         C4ReplicatorParameters replicator_parameters_;
         C4Error c4error_ {};
         std::mutex replicator_lock_;
+        ConflictResolutionPolicy policy_ = ConflictResolutionPolicy::kDefaultBehavior;
+
         std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> on_status_changed_callback_;
         std::function<void(bool pushing, std::string doc_id, std::string error_message, bool is_error,
                            bool error_is_transient)> on_document_error_callback_;
