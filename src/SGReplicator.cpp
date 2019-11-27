@@ -108,7 +108,10 @@ namespace Strata {
             });
         }
 
-        if(policy_ == ConflictResolutionPolicy::kResolveToRemoteRevision) {
+        // if(policy_ == ConflictResolutionPolicy::kResolveToRemoteRevision) {
+        if(on_document_error_callback_ == nullptr &&
+        //    policy_ == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
+            replicator_configuration_->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
             addDocumentEndedListener([](bool pushing, std::string doc_id, std::string error_message, bool is_error,
                                      bool error_is_transient){
                 // placeholder to make sure replicator_parameters_.onDocumentEnded has a callback if the "ResolveToRemoteRevision" policy is selected.
@@ -215,7 +218,8 @@ namespace Strata {
                                                     bool errorIsTransient,
                                                     void *context) {
 
-            if(flags == kRevIsConflict && ((SGReplicator *) context)->getConflictResolutionPolicy() == ConflictResolutionPolicy::kResolveToRemoteRevision) {
+            if(flags == kRevIsConflict && 
+            ((SGReplicator *) context)->getReplicatorConfig()->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
                 C4Database* db = ((SGReplicator *) context)->getReplicatorConfig()->getDatabase()->getC4db();
                 C4Error c4error;
 
@@ -232,12 +236,12 @@ namespace Strata {
                     return;
                 }
 
-                // Revision to keep and revision to discard are the same, so nothing to be done 
+                // Revision to keep and revision to discard are the same, so nothing to be done
                 if(slice(revID) == slice(doc->revID)) {
                     return;
                 }
 
-                if(!c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4error)) {    
+                if(!c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4error)) {
                     logC4Error(c4error);
                     DEBUG("c4doc_resolveConflict Error\n");
                     return;
@@ -290,13 +294,5 @@ namespace Strata {
 
     SGReplicatorConfiguration* SGReplicator::getReplicatorConfig() {
         return replicator_configuration_;
-    }
-
-    void SGReplicator::setConflictResolutionPolicy(const ConflictResolutionPolicy &policy) {
-        policy_ = policy;
-    }
-
-    SGReplicator::ConflictResolutionPolicy SGReplicator::getConflictResolutionPolicy() {
-        return policy_;
     }
 }

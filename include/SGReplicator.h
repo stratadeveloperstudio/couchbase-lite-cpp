@@ -79,11 +79,6 @@ namespace Strata {
             kBusy
         };
 
-        enum class ConflictResolutionPolicy {
-            kDefaultBehavior,
-            kResolveToRemoteRevision
-        };
-
         friend std::ostream& operator << (std::ostream& os, const ActivityLevel& activity_level);
 
         /** SGReplicator start.
@@ -126,17 +121,6 @@ namespace Strata {
         * @brief Returns the current replicator configuration
         */
         SGReplicatorConfiguration* getReplicatorConfig();
-
-        /** SGReplicator setConflictResolutionPolicy.
-        * @brief Set the conflict resolution policy for this replicator. This option should be set before the replicator is started.
-        * @param policy The desired conflict resolution policy.
-        */
-        void setConflictResolutionPolicy(const ConflictResolutionPolicy &policy);
-
-        /** SGReplicator getConflictResolutionPolicy.
-        * @brief Returns the current conflict resolution policy for this replicator.
-        */
-        ConflictResolutionPolicy getConflictResolutionPolicy();
       
     private:
         C4Replicator *c4replicator_{nullptr};
@@ -144,7 +128,6 @@ namespace Strata {
         C4ReplicatorParameters replicator_parameters_;
         C4Error c4error_ {};
         std::mutex replicator_lock_;
-        ConflictResolutionPolicy policy_ = ConflictResolutionPolicy::kDefaultBehavior;
 
         std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> on_status_changed_callback_;
         std::function<void(bool pushing, std::string doc_id, std::string error_message, bool is_error,
