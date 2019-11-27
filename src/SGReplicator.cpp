@@ -108,10 +108,8 @@ namespace Strata {
             });
         }
 
-        // if(policy_ == ConflictResolutionPolicy::kResolveToRemoteRevision) {
         if(on_document_error_callback_ == nullptr &&
-        //    policy_ == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
-            replicator_configuration_->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
+        replicator_configuration_->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
             addDocumentEndedListener([](bool pushing, std::string doc_id, std::string error_message, bool is_error,
                                      bool error_is_transient){
                 // placeholder to make sure replicator_parameters_.onDocumentEnded has a callback if the "ResolveToRemoteRevision" policy is selected.
