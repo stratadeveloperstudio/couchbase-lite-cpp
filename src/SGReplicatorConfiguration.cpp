@@ -24,7 +24,6 @@
 
 #include "SGReplicatorConfiguration.h"
 
-
 using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
@@ -122,5 +121,13 @@ namespace Strata {
 
     std::ostream& operator << (std::ostream& os, const SGReplicatorConfiguration::ReplicatorType& rep_type){
         return os << static_cast<underlying_type<SGReplicatorConfiguration::ReplicatorType>::type> (rep_type);
+    }
+
+    void SGReplicatorConfiguration::setConflictResolutionPolicy(const ConflictResolutionPolicy &policy) {
+        policy_ = policy;
+    }
+
+    SGReplicatorConfiguration::ConflictResolutionPolicy SGReplicatorConfiguration::getConflictResolutionPolicy() {
+        return policy_;
     }
 }

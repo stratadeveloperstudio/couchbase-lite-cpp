@@ -49,6 +49,11 @@ namespace Strata {
             kPull
         };
 
+        enum class ConflictResolutionPolicy {
+            kDefaultBehavior,
+            kResolveToRemoteRevision
+        };
+
         friend std::ostream& operator << (std::ostream& os, const ReplicatorType& rep_type);
 
         SGDatabase *getDatabase() const;
@@ -79,6 +84,17 @@ namespace Strata {
         */
         bool isValid() const;
 
+        /** SGReplicator setConflictResolutionPolicy.
+        * @brief Set the conflict resolution policy for this replicator. This option should be set before the replicator is started.
+        * @param policy The desired conflict resolution policy.
+        */
+        void setConflictResolutionPolicy(const ConflictResolutionPolicy &policy);
+
+        /** SGReplicator getConflictResolutionPolicy.
+        * @brief Returns the current conflict resolution policy for this replicator.
+        */
+        ConflictResolutionPolicy getConflictResolutionPolicy();
+
     private:
         SGDatabase *database_{nullptr};
         SGAuthenticator *authenticator_{nullptr};
@@ -89,12 +105,15 @@ namespace Strata {
 
         std::vector<std::string> channels_;
 
-        //Holds all extra configuration for the replicator
+        // Holds all extra configuration for the replicator
         fleece::Retained<fleece::impl::MutableDict> options_;
 
         // Options for the replicator progress level
         const int kNotifyOnEveryDocumentChange = 1;
         const int kNotifyOnEveryAttachmentChange = 2;
+
+        // Conflict resolution policy
+        ConflictResolutionPolicy policy_ = ConflictResolutionPolicy::kDefaultBehavior;
     };
 }
 

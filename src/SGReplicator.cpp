@@ -52,6 +52,8 @@ namespace Strata {
 
     SGReplicator::~SGReplicator() {
         stop();
+        c4repl_free(c4replicator_);
+        c4replicator_ = nullptr;
     }
 
     SGReplicator::SGReplicator(SGReplicatorConfiguration *replicator_configuration): SGReplicator() {
@@ -64,7 +66,6 @@ namespace Strata {
         if(c4replicator_ != nullptr){
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
             c4repl_stop(c4replicator_);
-            c4repl_free(c4replicator_);
         }
     }
 
@@ -103,7 +104,16 @@ namespace Strata {
         if(on_status_changed_callback_ == nullptr){
             addChangeListener([](SGReplicator::ActivityLevel, SGReplicatorProgress progress){
                 // placeholder to make sure replicator_parameters_.onStatusChanged has a callback.
-                // The onStatusChanged needs to run regardless if addChangeListener listener used by the application or not.
+                // The onStatusChanged needs to run regardless if addChangeListener is used by the application or not.
+            });
+        }
+
+        if(on_document_error_callback_ == nullptr &&
+        replicator_configuration_->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
+            addDocumentEndedListener([](bool pushing, std::string doc_id, std::string error_message, bool is_error,
+                                     bool error_is_transient){
+                // placeholder to make sure replicator_parameters_.onDocumentEnded has a callback if the "ResolveToRemoteRevision" policy is selected.
+                // If the "ResolveToRemoteRevision" policy is selected, onDocumentEnded needs to run regardless if addDocumentEndedListener is used by the application or not.
             });
         }
 
@@ -206,6 +216,50 @@ namespace Strata {
                                                     bool errorIsTransient,
                                                     void *context) {
 
+            if(flags == kRevIsConflict && 
+            ((SGReplicator *) context)->getReplicatorConfig()->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
+                C4Database* db = ((SGReplicator *) context)->getReplicatorConfig()->getDatabase()->getC4db();
+                C4Error c4error;
+
+                if(!c4db_beginTransaction(db, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4db_beginTransaction Error\n");
+                    return;
+                }
+
+                C4Document *doc = c4doc_get(db, slice(docID), true, &c4error);
+
+                if(!doc) {
+                    DEBUG("Document returned nullptr, aborting.\n");
+                    return;
+                }
+
+                // Revision to keep and revision to discard are the same, so nothing to be done
+                if(slice(revID) == slice(doc->revID)) {
+                    return;
+                }
+
+                if(!c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4doc_resolveConflict Error\n");
+                    return;
+                }
+
+                if(!c4doc_save(doc, 20, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4doc_save Error\n");
+                    return;
+                }
+
+                if(!c4db_endTransaction(db, true, &c4error)) {
+                    logC4Error(c4error);
+                    DEBUG("c4db_endTransaction Error\n");
+                    return;
+                }
+
+                DEBUG("Resolved conflict in document '%s' to the remote revision.\n", slice(docID).asString().c_str());
+            }
+
             alloc_slice error_message = c4error_getDescription(error);
             ((SGReplicator *) context)->on_document_error_callback_(pushing, slice(docID).asString(),
                                                                     error_message.asString(), error.code > 0,
@@ -234,5 +288,9 @@ namespace Strata {
 
     std::ostream& operator << (std::ostream& os, const SGReplicator::ActivityLevel& activity_level){
         return os << static_cast<underlying_type<SGReplicator::ActivityLevel>::type> (activity_level);
+    }
+
+    SGReplicatorConfiguration* SGReplicator::getReplicatorConfig() {
+        return replicator_configuration_;
     }
 }

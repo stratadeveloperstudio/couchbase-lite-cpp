@@ -117,12 +117,18 @@ namespace Strata {
         void addValidationListener(
                 const std::function<void(const std::string &doc_id, const std::string &json_body)> &callback);
 
+        /** SGReplicator getReplicatorConfig.
+        * @brief Returns the current replicator configuration
+        */
+        SGReplicatorConfiguration* getReplicatorConfig();
+      
     private:
         C4Replicator *c4replicator_{nullptr};
         SGReplicatorConfiguration *replicator_configuration_{nullptr};
         C4ReplicatorParameters replicator_parameters_;
         C4Error c4error_ {};
         std::mutex replicator_lock_;
+
         std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> on_status_changed_callback_;
         std::function<void(bool pushing, std::string doc_id, std::string error_message, bool is_error,
                            bool error_is_transient)> on_document_error_callback_;
