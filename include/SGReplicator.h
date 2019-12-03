@@ -94,7 +94,7 @@ namespace Strata {
         /** SGReplicator restart.
         * @brief Attempts to restart the replicator.
         */
-        SGReplicatorReturnStatus restart();
+        SGReplicatorReturnStatus restart(const int &delay_seconds);
 
         /** SGReplicator addChangeListener.
         * @brief Adds the callback function to the replicator's onStatusChanged event.
@@ -128,6 +128,8 @@ namespace Strata {
         C4ReplicatorParameters replicator_parameters_;
         C4Error c4error_ {};
         std::mutex replicator_lock_;
+
+        bool replicator_can_restart_ = true;
 
         std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> on_status_changed_callback_;
         std::function<void(bool pushing, std::string doc_id, std::string error_message, bool is_error,

@@ -67,6 +67,7 @@ namespace Strata {
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
             c4repl_stop(c4replicator_);
         }
+        replicator_can_restart_ = false;
     }
 
     SGReplicatorReturnStatus SGReplicator::start() {
@@ -184,8 +185,10 @@ namespace Strata {
 
                     // Error code == 0 means no errors were found
                     // In that case, do not restart since stopping was intentional
-                    if(replicator_status.error.code != 0) {
-                        ref->start();
+                    if(replicator_status.error.code != 0 && ref->replicator_can_restart_) {
+                        DEBUG("Disconnection detected. Attempting to reconnect in 5 seconds...\n");
+                        thread t([ref]{ref->restart(5);});
+                        t.join();
                     }
                 }
                 else {
@@ -195,11 +198,16 @@ namespace Strata {
         };
     }
 
-    SGReplicatorReturnStatus SGReplicator::restart() {
+    SGReplicatorReturnStatus SGReplicator::restart(const int &delay_seconds = 0) {
         if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
             this->stop();
         }
 
+        if(delay_seconds > 0) {
+            this_thread::sleep_for(chrono::seconds(delay_seconds));
+        }
+
+        DEBUG("Attempting to reconnect now.\n");
         return this->start();
     }
 
@@ -216,7 +224,7 @@ namespace Strata {
                                                     bool errorIsTransient,
                                                     void *context) {
 
-            if(flags == kRevIsConflict && 
+            if(flags == kRevIsConflict &&
             ((SGReplicator *) context)->getReplicatorConfig()->getConflictResolutionPolicy() == SGReplicatorConfiguration::ConflictResolutionPolicy::kResolveToRemoteRevision) {
                 C4Database* db = ((SGReplicator *) context)->getReplicatorConfig()->getDatabase()->getC4db();
                 C4Error c4error;
