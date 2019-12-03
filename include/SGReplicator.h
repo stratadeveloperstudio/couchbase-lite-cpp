@@ -94,7 +94,7 @@ namespace Strata {
         /** SGReplicator restart.
         * @brief Attempts to restart the replicator.
         */
-        SGReplicatorReturnStatus restart(const int &delay_seconds);
+        void restart();
 
         /** SGReplicator addChangeListener.
         * @brief Adds the callback function to the replicator's onStatusChanged event.
@@ -144,9 +144,18 @@ namespace Strata {
 
         bool isValidSGReplicatorConfiguration();
 
+        /** SGReplicator restart.
+        * @brief Attempts to restart the replicator.
+        */
+        SGReplicatorReturnStatus automatedRestart(const int &delay_seconds);
+
         // c4repl_stop is async and we need to track it so we don't endup with running another replicator.
         // When Activity status changed to stopped then we can free the replicator.
         SGReplicatorInternalStatus internal_status_ = SGReplicatorInternalStatus::kStopped;
+
+
+
+        bool manual_restart_ = false;
     };
 }
 
