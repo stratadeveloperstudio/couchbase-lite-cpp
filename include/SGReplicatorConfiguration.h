@@ -54,6 +54,11 @@ namespace Strata {
             kResolveToRemoteRevision
         };
 
+        enum class ReconnectionPolicy {
+            kDefaultBehavior,
+            kAutomaticallyReconnect
+        };
+
         friend std::ostream& operator << (std::ostream& os, const ReplicatorType& rep_type);
 
         SGDatabase *getDatabase() const;
@@ -95,6 +100,28 @@ namespace Strata {
         */
         ConflictResolutionPolicy getConflictResolutionPolicy();
 
+        /** SGReplicator setReconnectionPolicy.
+        * @brief Set the reconnection policy for this replicator. This option should be set before the replicator is started.
+        * @param policy The desired reconnection policy.
+        */
+        void setReconnectionPolicy(const ReconnectionPolicy &policy);
+
+        /** SGReplicator getReconnectionPolicy.
+        * @brief Returns the current reconnection policy for this replicator.
+        */
+        ReconnectionPolicy getReconnectionPolicy();
+
+        /** SGReplicator setReconnectionTimer.
+        * @brief Set the reconnection timer for this replicator. This option should be set before the replicator is started. No effect if reconnection is not enabled.
+        * @param policy The desired reconnection timer, in seconds.
+        */
+        void setReconnectionTimer(const int &reconnection_timer_sec);
+
+        /** SGReplicator getReconnectionTimer.
+        * @brief Returns the current reconnection timer, in seconds, for this replicator.
+        */
+        int getReconnectionTimer();
+
     private:
         SGDatabase *database_{nullptr};
         SGAuthenticator *authenticator_{nullptr};
@@ -113,7 +140,12 @@ namespace Strata {
         const int kNotifyOnEveryAttachmentChange = 2;
 
         // Conflict resolution policy
-        ConflictResolutionPolicy policy_ = ConflictResolutionPolicy::kDefaultBehavior;
+        ConflictResolutionPolicy conflict_resolution_policy_ = ConflictResolutionPolicy::kDefaultBehavior;
+
+        // Automatic replication restart policy
+        ReconnectionPolicy reconnection_policy_ = ReconnectionPolicy::kDefaultBehavior;
+        // Automatic replication restart timer
+        int reconnection_timer_sec_ = 5;
     };
 }
 

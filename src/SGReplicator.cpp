@@ -186,9 +186,12 @@ namespace Strata {
 
                     // Error code == 0 means no errors were found
                     // In that case, do not restart since stopping was intentional
-                    if(replicator_status.error.code != 0 && ref->replicator_can_restart_) {
-                        DEBUG("Disconnection detected. Attempting to reconnect in 20 seconds...\n");
-                        thread t([ref]{ref->automatedRestart(20);});
+                    if(replicator_status.error.code != 0 &&
+                       ref->getReplicatorConfig()->getReconnectionPolicy() == SGReplicatorConfiguration::ReconnectionPolicy::kAutomaticallyReconnect &&
+                       ref->replicator_can_restart_)
+                    {
+                        DEBUG("Disconnection detected. Attempting to reconnect in %d seconds...\n", ref->getReplicatorConfig()->getReconnectionTimer());
+                        thread t([ref]{ref->automatedRestart(ref->getReplicatorConfig()->getReconnectionTimer());});
                         t.join();
                     }
                     // The restart() function was called ("manual" restart)
@@ -204,10 +207,16 @@ namespace Strata {
     }
 
     void SGReplicator::restart() {
-        manual_restart_requested_ = true;
-        if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
-            this->stop();
+        if(internal_status_ == Strata::SGReplicatorInternalStatus::kStopped) {
+            start();
+            return;
         }
+        manual_restart_requested_ = true;
+        stop();
+        // manual_restart_requested_ = true;
+        // if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
+        //     this->stop();
+        // }
     }
 
     SGReplicatorReturnStatus SGReplicator::automatedRestart(const int &delay_seconds = 0) {

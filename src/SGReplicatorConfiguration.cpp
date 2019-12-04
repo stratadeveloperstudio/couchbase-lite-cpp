@@ -124,10 +124,26 @@ namespace Strata {
     }
 
     void SGReplicatorConfiguration::setConflictResolutionPolicy(const ConflictResolutionPolicy &policy) {
-        policy_ = policy;
+        conflict_resolution_policy_ = policy;
     }
 
     SGReplicatorConfiguration::ConflictResolutionPolicy SGReplicatorConfiguration::getConflictResolutionPolicy() {
-        return policy_;
+        return conflict_resolution_policy_;
     }
+
+    void SGReplicatorConfiguration::setReconnectionPolicy(const ReconnectionPolicy &policy) {
+        reconnection_policy_ = policy;
+    }
+
+    SGReplicatorConfiguration::ReconnectionPolicy SGReplicatorConfiguration::getReconnectionPolicy() {
+        return reconnection_policy_;
+    }
+
+    void SGReplicatorConfiguration::setReconnectionTimer(const int &reconnection_timer_sec) {
+        reconnection_timer_sec_ = reconnection_timer_sec;
+    }
+
+    int SGReplicatorConfiguration::getReconnectionTimer() {
+        return reconnection_timer_sec_;
+    }    
 }

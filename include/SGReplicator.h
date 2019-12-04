@@ -92,7 +92,7 @@ namespace Strata {
         void stop();
 
         /** SGReplicator restart.
-        * @brief Attempts to restart the replicator.
+        * @brief Stops (if necessary) and restarts the replicator. Useful for changing the configuration. 
         */
         void restart();
 
@@ -142,8 +142,9 @@ namespace Strata {
 
         bool isValidSGReplicatorConfiguration();
 
-        /** SGReplicator restart.
-        * @brief Attempts to restart the replicator.
+        /** SGReplicator automatedRestart.
+        * @brief Internal function used to automatically attempt to reconnect the replication if it is unintentionally stopped.
+        * @param delay_seconds Time, in seconds, to wait before each attempt at reconnection.
         */
         SGReplicatorReturnStatus automatedRestart(const int &delay_seconds);
 
@@ -151,6 +152,7 @@ namespace Strata {
         // When Activity status changed to stopped then we can free the replicator.
         SGReplicatorInternalStatus internal_status_ = SGReplicatorInternalStatus::kStopped;
 
+        // Replication restarting control flags
         bool replicator_can_restart_ = true;
         bool manual_restart_requested_ = false;
     };
