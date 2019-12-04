@@ -121,15 +121,13 @@ namespace Strata {
         * @brief Returns the current replicator configuration
         */
         SGReplicatorConfiguration* getReplicatorConfig();
-      
+
     private:
         C4Replicator *c4replicator_{nullptr};
         SGReplicatorConfiguration *replicator_configuration_{nullptr};
         C4ReplicatorParameters replicator_parameters_;
         C4Error c4error_ {};
         std::mutex replicator_lock_;
-
-        bool replicator_can_restart_ = true;
 
         std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> on_status_changed_callback_;
         std::function<void(bool pushing, std::string doc_id, std::string error_message, bool is_error,
@@ -153,9 +151,8 @@ namespace Strata {
         // When Activity status changed to stopped then we can free the replicator.
         SGReplicatorInternalStatus internal_status_ = SGReplicatorInternalStatus::kStopped;
 
-
-
-        bool manual_restart_ = false;
+        bool replicator_can_restart_ = true;
+        bool manual_restart_requested_ = false;
     };
 }
 
