@@ -213,10 +213,6 @@ namespace Strata {
         }
         manual_restart_requested_ = true;
         stop();
-        // manual_restart_requested_ = true;
-        // if(internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) {
-        //     this->stop();
-        // }
     }
 
     SGReplicatorReturnStatus SGReplicator::automatedRestart(const int &delay_seconds = 0) {
