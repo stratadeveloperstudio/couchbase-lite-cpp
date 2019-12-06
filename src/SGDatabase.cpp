@@ -40,13 +40,11 @@ using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
 
-#define DEBUG(...) printf("SGDatabase: "); printf(__VA_ARGS__)
-
-#ifdef SHOW_DETAILED_DATABASE_MESSAGES
-const bool show_detailed_database_messages_ = true;
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGDatabase: "); printf(__VA_ARGS__)
 #else
-const bool show_detailed_database_messages_ = false;
-#endif
+ #define DEBUG(...) //
+#endif 
 
 namespace Strata {
     SGDatabase::SGDatabase() {}
@@ -254,10 +252,7 @@ namespace Strata {
         }
 
         C4Document *c4doc;
-
-        if(show_detailed_database_messages_) {
-            DEBUG("START getDocumentById: %s\n", doc_id.c_str());
-        }
+        DEBUG("START getDocumentById: %s\n", doc_id.c_str());
 
         if(!c4db_beginTransaction(c4db_, &c4error_)){
             logC4Error(c4error_);
@@ -273,9 +268,7 @@ namespace Strata {
             return nullptr;
         }
 
-        if(show_detailed_database_messages_) {
-            DEBUG("END getDocumentById: %s\n", doc_id.c_str());
-        }
+        DEBUG("END getDocumentById: %s\n", doc_id.c_str());
         return c4doc;
     }
 

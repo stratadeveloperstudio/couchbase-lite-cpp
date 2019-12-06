@@ -25,7 +25,13 @@
 #include "SGPath.h"
 #include <litecore/FilePath.hh>
 #include <litecore/Error.hh>
-#define DEBUG(...) printf("SGPath: "); printf(__VA_ARGS__)
+
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
+#else
+ #define DEBUG(...) //
+#endif 
+
 using namespace litecore;
 namespace Strata {
     SGPath::SGPath(const std::string& path){

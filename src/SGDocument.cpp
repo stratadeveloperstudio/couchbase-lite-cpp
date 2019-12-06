@@ -28,13 +28,11 @@
 using fleece::impl::Value;
 using namespace std;
 
-#define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
-
-#ifdef SHOW_DETAILED_DATABASE_MESSAGES
-const bool show_detailed_database_messages_ = true;
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
 #else
-const bool show_detailed_database_messages_ = false;
-#endif
+ #define DEBUG(...) //
+#endif 
 
 namespace Strata {
     SGDocument::SGDocument() {}
@@ -81,9 +79,7 @@ namespace Strata {
     void SGDocument::initMutableDict() {
         if(exist()) {
             mutable_dict_ = fleece::impl::MutableDict::newDict(Value::fromData(c4document_->selectedRev.body)->asDict());
-            if(show_detailed_database_messages_) {
-                DEBUG("Doc Id: %s, body: %s, revision:%s\n", id_.c_str(), getBody().c_str(), fleece::slice(c4document_->selectedRev.revID).asString().c_str());
-            }
+            DEBUG("Doc Id: %s, body: %s, revision:%s\n", id_.c_str(), getBody().c_str(), fleece::slice(c4document_->selectedRev.revID).asString().c_str());
             return;
         }
         // Init a new mutable dict

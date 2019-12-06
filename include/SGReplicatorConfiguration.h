@@ -145,7 +145,7 @@ namespace Strata {
         // Automatic replication restart policy
         ReconnectionPolicy reconnection_policy_ = ReconnectionPolicy::kDefaultBehavior;
         // Automatic replication restart timer
-        int reconnection_timer_sec_ = 5;
+        unsigned int reconnection_timer_sec_ = 5;
     };
 }
 

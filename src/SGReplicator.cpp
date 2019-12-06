@@ -32,7 +32,12 @@
 using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
-#define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
+
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
+#else
+ #define DEBUG(...) //
+#endif 
 
 namespace Strata {
     SGReplicator::SGReplicator() {

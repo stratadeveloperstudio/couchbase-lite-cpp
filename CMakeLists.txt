@@ -87,5 +87,5 @@ install(
 )
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DSHOW_DETAILED_DATABASE_MESSAGES)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SHOW_DATABASE_MESSAGES)
 endif()
