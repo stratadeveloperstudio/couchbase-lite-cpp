@@ -196,8 +196,7 @@ namespace Strata {
                        ref->replicator_can_restart_)
                     {
                         DEBUG("Disconnection detected. Attempting to reconnect in %d seconds...\n", ref->getReplicatorConfig()->getReconnectionTimer());
-                        thread t([ref]{ref->automatedRestart(ref->getReplicatorConfig()->getReconnectionTimer());});
-                        t.join();
+                        ref->automatedRestart(ref->getReplicatorConfig()->getReconnectionTimer());
                     }
                     // The restart() function was called ("manual" restart)
                     else if(replicator_status.error.code == 0 && ref->manual_restart_requested_) {
