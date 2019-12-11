@@ -144,7 +144,7 @@ namespace Strata {
         return reconnection_policy_;
     }
 
-    void SGReplicatorConfiguration::setReconnectionTimer(const int &reconnection_timer_sec) {
+    void SGReplicatorConfiguration::setReconnectionTimer(const unsigned int &reconnection_timer_sec) {
         reconnection_timer_sec_ = reconnection_timer_sec;
     }
 

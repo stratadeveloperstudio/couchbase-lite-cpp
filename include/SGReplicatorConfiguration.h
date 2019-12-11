@@ -115,7 +115,7 @@ namespace Strata {
         * @brief Set the reconnection timer for this replicator. This option should be set before the replicator is started. No effect if reconnection is not enabled.
         * @param policy The desired reconnection timer, in seconds.
         */
-        void setReconnectionTimer(const int &reconnection_timer_sec);
+        void setReconnectionTimer(const unsigned int &reconnection_timer_sec);
 
         /** SGReplicator getReconnectionTimer.
         * @brief Returns the current reconnection timer, in seconds, for this replicator.
