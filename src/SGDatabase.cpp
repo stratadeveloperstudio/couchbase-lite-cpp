@@ -40,7 +40,12 @@ using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
 
-#define DEBUG(...) printf("SGDatabase: "); printf(__VA_ARGS__)
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGDatabase: "); printf(__VA_ARGS__)
+#else
+ #define DEBUG(...) //
+#endif 
+
 namespace Strata {
     SGDatabase::SGDatabase() {}
 
@@ -247,12 +252,11 @@ namespace Strata {
         }
 
         C4Document *c4doc;
-
         DEBUG("START getDocumentById: %s\n", doc_id.c_str());
 
         if(!c4db_beginTransaction(c4db_, &c4error_)){
             logC4Error(c4error_);
-            DEBUG("getDocumentById starting transaction failed\n");
+            DEBUG("getDocumentById starting transaction failed on document %s\n", doc_id.c_str());
             return nullptr;
         }
 
@@ -260,7 +264,7 @@ namespace Strata {
 
         if(!c4db_endTransaction(c4db_, true, &c4error_)){
             logC4Error(c4error_);
-            DEBUG("getDocumentById ending transaction failed\n");
+            DEBUG("getDocumentById ending transaction failed on document %s\n", doc_id.c_str());
             return nullptr;
         }
 

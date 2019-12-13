@@ -49,6 +49,16 @@ namespace Strata {
             kPull
         };
 
+        enum class ConflictResolutionPolicy {
+            kDefaultBehavior,
+            kResolveToRemoteRevision
+        };
+
+        enum class ReconnectionPolicy {
+            kDefaultBehavior,
+            kAutomaticallyReconnect
+        };
+
         friend std::ostream& operator << (std::ostream& os, const ReplicatorType& rep_type);
 
         SGDatabase *getDatabase() const;
@@ -79,6 +89,39 @@ namespace Strata {
         */
         bool isValid() const;
 
+        /** SGReplicator setConflictResolutionPolicy.
+        * @brief Set the conflict resolution policy for this replicator. This option should be set before the replicator is started.
+        * @param policy The desired conflict resolution policy.
+        */
+        void setConflictResolutionPolicy(const ConflictResolutionPolicy &policy);
+
+        /** SGReplicator getConflictResolutionPolicy.
+        * @brief Returns the current conflict resolution policy for this replicator.
+        */
+        ConflictResolutionPolicy getConflictResolutionPolicy();
+
+        /** SGReplicator setReconnectionPolicy.
+        * @brief Set the reconnection policy for this replicator. This option should be set before the replicator is started.
+        * @param policy The desired reconnection policy.
+        */
+        void setReconnectionPolicy(const ReconnectionPolicy &policy);
+
+        /** SGReplicator getReconnectionPolicy.
+        * @brief Returns the current reconnection policy for this replicator.
+        */
+        ReconnectionPolicy getReconnectionPolicy();
+
+        /** SGReplicator setReconnectionTimer.
+        * @brief Set the reconnection timer for this replicator. This option should be set before the replicator is started. No effect if reconnection is not enabled.
+        * @param policy The desired reconnection timer, in seconds.
+        */
+        void setReconnectionTimer(const unsigned int &reconnection_timer_sec);
+
+        /** SGReplicator getReconnectionTimer.
+        * @brief Returns the current reconnection timer, in seconds, for this replicator.
+        */
+        int getReconnectionTimer();
+
     private:
         SGDatabase *database_{nullptr};
         SGAuthenticator *authenticator_{nullptr};
@@ -89,12 +132,20 @@ namespace Strata {
 
         std::vector<std::string> channels_;
 
-        //Holds all extra configuration for the replicator
+        // Holds all extra configuration for the replicator
         fleece::Retained<fleece::impl::MutableDict> options_;
 
         // Options for the replicator progress level
         const int kNotifyOnEveryDocumentChange = 1;
         const int kNotifyOnEveryAttachmentChange = 2;
+
+        // Conflict resolution policy
+        ConflictResolutionPolicy conflict_resolution_policy_ = ConflictResolutionPolicy::kDefaultBehavior;
+
+        // Automatic replication restart policy
+        ReconnectionPolicy reconnection_policy_ = ReconnectionPolicy::kDefaultBehavior;
+        // Automatic replication restart timer
+        unsigned int reconnection_timer_sec_ = 5;
     };
 }
 

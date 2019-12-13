@@ -26,7 +26,12 @@
 #include <fleece/FleeceImpl.hh>
 using namespace std;
 using namespace fleece;
-#define DEBUG(...) printf("SGURLEndpoint: "); printf(__VA_ARGS__)
+
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGURLEndpoint: "); printf(__VA_ARGS__)
+#else
+ #define DEBUG(...) //
+#endif 
 
 namespace Strata {
     SGURLEndpoint::SGURLEndpoint() {

@@ -26,7 +26,12 @@
 #include <litecore/c4Replicator.h>
 using namespace fleece;
 using namespace fleece::impl;
-#define DEBUG(...) printf("SGBasicAuthenticator: "); printf(__VA_ARGS__)
+
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGBasicAuthenticator: "); printf(__VA_ARGS__)
+#else
+ #define DEBUG(...) //
+#endif 
 
 namespace Strata {
     SGBasicAuthenticator::SGBasicAuthenticator() {}

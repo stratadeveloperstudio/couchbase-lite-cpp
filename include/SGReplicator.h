@@ -92,9 +92,9 @@ namespace Strata {
         void stop();
 
         /** SGReplicator restart.
-        * @brief Attempts to restart the replicator.
+        * @brief Stops (if necessary) and restarts the replicator. Useful for changing the configuration. 
         */
-        SGReplicatorReturnStatus restart();
+        void restart();
 
         /** SGReplicator addChangeListener.
         * @brief Adds the callback function to the replicator's onStatusChanged event.
@@ -117,12 +117,18 @@ namespace Strata {
         void addValidationListener(
                 const std::function<void(const std::string &doc_id, const std::string &json_body)> &callback);
 
+        /** SGReplicator getReplicatorConfig.
+        * @brief Returns the current replicator configuration
+        */
+        SGReplicatorConfiguration* getReplicatorConfig();
+
     private:
         C4Replicator *c4replicator_{nullptr};
         SGReplicatorConfiguration *replicator_configuration_{nullptr};
         C4ReplicatorParameters replicator_parameters_;
         C4Error c4error_ {};
         std::mutex replicator_lock_;
+
         std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> on_status_changed_callback_;
         std::function<void(bool pushing, std::string doc_id, std::string error_message, bool is_error,
                            bool error_is_transient)> on_document_error_callback_;
@@ -136,9 +142,19 @@ namespace Strata {
 
         bool isValidSGReplicatorConfiguration();
 
+        /** SGReplicator automatedRestart.
+        * @brief Internal function used to automatically attempt to reconnect the replication if it is unintentionally stopped.
+        * @param delay_seconds Time, in seconds, to wait before each attempt at reconnection.
+        */
+        SGReplicatorReturnStatus automatedRestart(const int &delay_seconds);
+
         // c4repl_stop is async and we need to track it so we don't endup with running another replicator.
         // When Activity status changed to stopped then we can free the replicator.
         SGReplicatorInternalStatus internal_status_ = SGReplicatorInternalStatus::kStopped;
+
+        // Replication restarting control flags
+        bool replicator_can_restart_ = true;
+        bool manual_restart_requested_ = false;
     };
 }
 

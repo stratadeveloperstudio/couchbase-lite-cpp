@@ -66,10 +66,7 @@ private:
 };
 
 int main(){
-
-
-    //SGDatabase sgDatabase("db2", "/Users/zbgd3f/");
-    // Default db location will be current location location
+    // Default db location will be current location
     SGDatabase sgDatabase("db2");
 
     DEBUG("Database will be stored in: %s\n", sgDatabase.getDBPath().c_str());
@@ -216,6 +213,15 @@ int main(){
         return 1;
     }
 
+    this_thread::sleep_for(chrono::milliseconds(1000));
+
+    channels = {"channel2"};
+    replicator_configuration.setChannels(channels);
+
+    // Restart the replicator so that the configuration changes come into effect
+    DEBUG("About to restart the replicator with different channels\n");
+    replicator.restart();
+
     DEBUG("About to stop the replicator thread\n");
     this_thread::sleep_for(chrono::milliseconds(1000));
 
@@ -224,16 +230,7 @@ int main(){
     replicator_configuration.setChannels(channels);
     this_thread::sleep_for(chrono::milliseconds(5000));
 
-    if(replicator.start() != SGReplicatorReturnStatus::kNoError){
-        DEBUG("Could not start the replicator!\n");
-        return 1;
-    }
-
-    this_thread::sleep_for(chrono::milliseconds(5000));
-
-
-    DEBUG("bye\n");
-
+    DEBUG("End of demo.\n");
 
     return 0;
 }

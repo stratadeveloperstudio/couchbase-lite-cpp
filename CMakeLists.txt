@@ -85,3 +85,7 @@ install(
     DESTINATION include/couchbaselitecpp
     FILES_MATCHING PATTERN "*.h*"
 )
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SHOW_DATABASE_MESSAGES)
+endif()

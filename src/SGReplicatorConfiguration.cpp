@@ -24,11 +24,15 @@
 
 #include "SGReplicatorConfiguration.h"
 
-
 using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
-#define DEBUG(...) printf("SGReplicatorConfiguration: "); printf(__VA_ARGS__)
+
+#ifdef SHOW_DATABASE_MESSAGES
+ #define DEBUG(...) printf("SGReplicatorConfiguration: "); printf(__VA_ARGS__)
+#else
+ #define DEBUG(...) //
+#endif 
 
 namespace Strata {
     SGReplicatorConfiguration::SGReplicatorConfiguration() {
@@ -123,4 +127,28 @@ namespace Strata {
     std::ostream& operator << (std::ostream& os, const SGReplicatorConfiguration::ReplicatorType& rep_type){
         return os << static_cast<underlying_type<SGReplicatorConfiguration::ReplicatorType>::type> (rep_type);
     }
+
+    void SGReplicatorConfiguration::setConflictResolutionPolicy(const ConflictResolutionPolicy &policy) {
+        conflict_resolution_policy_ = policy;
+    }
+
+    SGReplicatorConfiguration::ConflictResolutionPolicy SGReplicatorConfiguration::getConflictResolutionPolicy() {
+        return conflict_resolution_policy_;
+    }
+
+    void SGReplicatorConfiguration::setReconnectionPolicy(const ReconnectionPolicy &policy) {
+        reconnection_policy_ = policy;
+    }
+
+    SGReplicatorConfiguration::ReconnectionPolicy SGReplicatorConfiguration::getReconnectionPolicy() {
+        return reconnection_policy_;
+    }
+
+    void SGReplicatorConfiguration::setReconnectionTimer(const unsigned int &reconnection_timer_sec) {
+        reconnection_timer_sec_ = reconnection_timer_sec;
+    }
+
+    int SGReplicatorConfiguration::getReconnectionTimer() {
+        return reconnection_timer_sec_;
+    }    
 }
