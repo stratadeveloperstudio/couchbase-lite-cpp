@@ -17,6 +17,10 @@ if(NOT WIN32)
         PATCH_COMMAND cd vendor/mbedtls && git reset --hard
         COMMAND git apply -v ${CMAKE_SOURCE_DIR}/patches/couchbase-lite-core_vendor_mbedtls_fix.patch
 
+        # Patches to enable SSL connections
+        COMMAND cd ${SOURCE_DIR_EXTERN}/couchbase-lite-core && git reset --hard && git apply -v ${CMAKE_SOURCE_DIR}/patches/litecore-diff.patch
+        COMMAND cd ${SOURCE_DIR_EXTERN}/couchbase-lite-core/vendor/civetweb && git reset --hard && git apply -v --ignore-space-change --ignore-whitespace ${CMAKE_SOURCE_DIR}/patches/civetweb-diff.patch
+
         CMAKE_ARGS ${CMAKE_ARGS}
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
@@ -52,6 +56,10 @@ else()
 
         PATCH_COMMAND cd vendor/mbedtls && git reset --hard
         COMMAND git apply -v ${CMAKE_SOURCE_DIR}/patches/couchbase-lite-core_vendor_mbedtls_fix.patch
+
+        # Patches to enable SSL connections
+        COMMAND cd ${SOURCE_DIR_EXTERN}/couchbase-lite-core && git reset --hard && git apply -v ${CMAKE_SOURCE_DIR}/patches/litecore-diff.patch
+        COMMAND cd ${SOURCE_DIR_EXTERN}/couchbase-lite-core/vendor/civetweb && git reset --hard && git apply -v --ignore-space-change --ignore-whitespace ${CMAKE_SOURCE_DIR}/patches/civetweb-diff.patch
 
         CMAKE_ARGS ${CMAKE_ARGS}
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
