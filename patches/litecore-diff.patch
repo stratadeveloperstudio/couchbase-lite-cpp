@@ -1,13 +1,17 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 89fe9f8a..38761305 100644
+index 89fe9f8a..a8126072 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -46,6 +46,10 @@ add_definitions(-DSQLITE_OMIT_LOAD_EXTENSION        # This one's for SQLiteCpp
+@@ -46,6 +46,14 @@ add_definitions(-DSQLITE_OMIT_LOAD_EXTENSION        # This one's for SQLiteCpp
                  -DSQLITE_ENABLE_FTS3_PARENTHESIS
                  -DSQLITE_ENABLE_FTS3_TOKENIZER)
 
 +if(DEFINED SSL_LIB AND DEFINED CRYPTO_LIB)
-+    add_definitions(-DOPENSSL_API_1_1 -DSSL_LIB=${SSL_LIB} -DCRYPTO_LIB=${CRYPTO_LIB})
++    if("${SSL_LIB}" STREQUAL "" OR "${CRYPTO_LIB}" STREQUAL "")
++        add_definitions(-DNO_SSL)
++    else()
++        add_definitions(-DOPENSSL_API_1_1 -DSSL_LIB=${SSL_LIB} -DCRYPTO_LIB=${CRYPTO_LIB})
++    endif()
 +endif()
 +
  if(BUILD_ENTERPRISE)
