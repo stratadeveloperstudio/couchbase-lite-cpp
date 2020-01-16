@@ -1,0 +1,93 @@
+diff --git a/src/civetweb.c b/src/civetweb.c
+index 2b49e367..de98743c 100644
+--- a/src/civetweb.c
++++ b/src/civetweb.c
+@@ -323,14 +323,6 @@ typedef long off_t;
+ #define ERRNO ((int)(GetLastError()))
+ #define NO_SOCKLEN_T
+ 
+-#if defined(_WIN64) || defined(__MINGW64__)
+-#define SSL_LIB "ssleay64.dll"
+-#define CRYPTO_LIB "libeay64.dll"
+-#else
+-#define SSL_LIB "ssleay32.dll"
+-#define CRYPTO_LIB "libeay32.dll"
+-#endif
+-
+ #define O_NONBLOCK (0)
+ #ifndef W_OK
+ #define W_OK (2) /* http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx */
+@@ -521,10 +513,7 @@ typedef unsigned short int in_port_t;
+ #include <dlfcn.h>
+ #endif
+ #include <pthread.h>
+-#if defined(__MACH__)
+-#define SSL_LIB "libssl.dylib"
+-#define CRYPTO_LIB "libcrypto.dylib"
+-#else
++#if !defined(__MACH__)
+ #if !defined(SSL_LIB)
+ #define SSL_LIB "libssl.so"
+ #endif
+@@ -7315,7 +7304,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
+                   error,
+                   MG_ERR_SSL_UNINITIALIZED,
+                   "%s",
+-                  "SSL is not initialized");
++                  "SSL is not initialized OPENSSL_API_1_1");
+ 		return 0;
+ 	}
+ #else
+@@ -7324,7 +7313,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
+                   error,
+                   MG_ERR_SSL_UNINITIALIZED,
+                   "%s",
+-                  "SSL is not initialized");
++                  "SSL is not initialized SSLv23_");
+ 		return 0;
+ 	}
+ 
+@@ -12648,7 +12637,7 @@ static void *
+ 	struct ssl_func *fp;
+ 	int ok;
+ 	int truncated = 0;
+-
++    printf("\nDynamic library name: %s\n", dll_name);
+ 	if ((dll_handle = dlopen(dll_name, RTLD_LAZY)) == NULL) {
+         set_error(NULL,
+                   error,
+@@ -12657,6 +12646,7 @@ static void *
+                   __func__,
+                   dll_name,
+                   dlerror());
++        printf("\nCannot load %s\n", dll_name);
+ 		return NULL;
+ 	}
+ 
+@@ -12696,8 +12686,7 @@ static void *
+ 					}
+ 				}
+ 			}
+-			/* Debug:
+-			 * printf("Missing function: %s\n", fp->name); */
++			printf("Missing function: %s\n", fp->name);
+ 		} else {
+ 			fp->ptr = u.fp;
+ 		}
+@@ -12732,6 +12721,16 @@ static int
+     clear_error(error);
+ 
+ #if !defined(NO_SSL_DL)
++    if (!ssllib_dll_handle) {
++        ssllib_dll_handle = load_dll(error, SSL_LIB, ssl_sw);
++		if (!ssllib_dll_handle) {
++			printf("\nFailed to set ssllib_dll_handle\n");
++		    return 0;
++		}
++	}
++
++    clear_error(error);
++
+ 	if (!cryptolib_dll_handle) {
+ 		cryptolib_dll_handle = load_dll(error, CRYPTO_LIB, crypto_sw);
+ 		if (!cryptolib_dll_handle) {
