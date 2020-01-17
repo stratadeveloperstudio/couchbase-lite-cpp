@@ -1,23 +1,19 @@
 diff --git a/src/civetweb.c b/src/civetweb.c
-index 2b49e367..a58ec6c5 100644
+index 2b49e367..729d5079 100644
 --- a/src/civetweb.c
 +++ b/src/civetweb.c
-@@ -20,6 +20,14 @@
+@@ -20,6 +20,10 @@
   * THE SOFTWARE.
   */
  
-+#if !defined SSL_LIB
-+#define NO_SSL
-+#endif
-+
-+#if !defined CRYPTO_LIB
++#if !defined SSL_LIB || !defined CRYPTO_LIB
 +#define NO_SSL
 +#endif
 +
  #if defined(_WIN32)
  #if !defined(_CRT_SECURE_NO_WARNINGS)
  #define _CRT_SECURE_NO_WARNINGS /* Disable deprecation warning in VS2005 */
-@@ -323,14 +331,6 @@ typedef long off_t;
+@@ -323,14 +327,6 @@ typedef long off_t;
  #define ERRNO ((int)(GetLastError()))
  #define NO_SOCKLEN_T
  
@@ -32,7 +28,7 @@ index 2b49e367..a58ec6c5 100644
  #define O_NONBLOCK (0)
  #ifndef W_OK
  #define W_OK (2) /* http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx */
-@@ -521,10 +521,7 @@ typedef unsigned short int in_port_t;
+@@ -521,10 +517,7 @@ typedef unsigned short int in_port_t;
  #include <dlfcn.h>
  #endif
  #include <pthread.h>
@@ -44,7 +40,7 @@ index 2b49e367..a58ec6c5 100644
  #if !defined(SSL_LIB)
  #define SSL_LIB "libssl.so"
  #endif
-@@ -4940,10 +4937,10 @@ push(struct mg_context *ctx,
+@@ -4940,10 +4933,10 @@ push(struct mg_context *ctx,
  			return -1;
  		}
  
@@ -59,7 +55,7 @@ index 2b49e367..a58ec6c5 100644
  		/* Only in case n=0 (timeout), repeat calling the write function */
  
  		if (timeout >= 0) {
-@@ -7315,7 +7312,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
+@@ -7315,7 +7308,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
                    error,
                    MG_ERR_SSL_UNINITIALIZED,
                    "%s",
@@ -68,7 +64,7 @@ index 2b49e367..a58ec6c5 100644
  		return 0;
  	}
  #else
-@@ -7324,7 +7321,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
+@@ -7324,7 +7317,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
                    error,
                    MG_ERR_SSL_UNINITIALIZED,
                    "%s",
@@ -77,7 +73,7 @@ index 2b49e367..a58ec6c5 100644
  		return 0;
  	}
  
-@@ -12648,7 +12645,7 @@ static void *
+@@ -12648,7 +12641,7 @@ static void *
  	struct ssl_func *fp;
  	int ok;
  	int truncated = 0;
@@ -86,7 +82,7 @@ index 2b49e367..a58ec6c5 100644
  	if ((dll_handle = dlopen(dll_name, RTLD_LAZY)) == NULL) {
          set_error(NULL,
                    error,
-@@ -12657,6 +12654,7 @@ static void *
+@@ -12657,6 +12650,7 @@ static void *
                    __func__,
                    dll_name,
                    dlerror());
@@ -94,7 +90,7 @@ index 2b49e367..a58ec6c5 100644
  		return NULL;
  	}
  
-@@ -12696,8 +12694,7 @@ static void *
+@@ -12696,8 +12690,7 @@ static void *
  					}
  				}
  			}
@@ -104,7 +100,7 @@ index 2b49e367..a58ec6c5 100644
  		} else {
  			fp->ptr = u.fp;
  		}
-@@ -12732,6 +12729,16 @@ static int
+@@ -12732,6 +12725,16 @@ static int
      clear_error(error);
  
  #if !defined(NO_SSL_DL)
@@ -121,13 +117,11 @@ index 2b49e367..a58ec6c5 100644
  	if (!cryptolib_dll_handle) {
  		cryptolib_dll_handle = load_dll(error, CRYPTO_LIB, crypto_sw);
  		if (!cryptolib_dll_handle) {
-@@ -12751,12 +12758,17 @@ static int
+@@ -12751,12 +12754,14 @@ static int
      clear_error(error);
  
  #if !defined(NO_SSL_DL)
-+#ifdef SSL_LIB
-+#ifdef CRYPTO_LIB
-+
++#if defined SSL_LIB && defined CRYPTO_LIB
  	if (!cryptolib_dll_handle) {
  		cryptolib_dll_handle = load_dll(error, CRYPTO_LIB, crypto_sw);
  		if (!cryptolib_dll_handle) {
@@ -135,29 +129,26 @@ index 2b49e367..a58ec6c5 100644
  		}
  	}
 +#endif
-+#endif
  #endif /* NO_SSL_DL */
  
  	if (mg_atomic_inc(&cryptolib_users) > 1) {
-@@ -12925,6 +12937,8 @@ set_ssl_option(struct mg_context *ctx)
+@@ -12925,6 +12930,7 @@ set_ssl_option(struct mg_context *ctx)
  	}
  
  #if !defined(NO_SSL_DL)
-+#ifdef SSL_LIB
-+#ifdef CRYPTO_LIB
++#if defined SSL_LIB && defined CRYPTO_LIB
  	if (!ssllib_dll_handle) {
  		ssllib_dll_handle = load_dll(&error, SSL_LIB, ssl_sw);
  		if (!ssllib_dll_handle) {
-@@ -12932,6 +12946,8 @@ set_ssl_option(struct mg_context *ctx)
+@@ -12932,6 +12938,7 @@ set_ssl_option(struct mg_context *ctx)
  			return 0;
  		}
  	}
 +#endif
-+#endif
  #endif /* NO_SSL_DL */
  
  #ifdef OPENSSL_API_1_1
-@@ -14169,7 +14185,7 @@ mg_connect_websocket_client2(const char *host,
+@@ -14169,7 +14176,7 @@ mg_connect_websocket_client2(const char *host,
                        error,
                        MG_ERR_HTTP_STATUS_BASE + httpStatus,
                        "Unexpected response status %s %s",
