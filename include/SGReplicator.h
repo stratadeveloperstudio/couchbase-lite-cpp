@@ -91,10 +91,21 @@ namespace Strata {
         */
         void stop();
 
+        /** SGReplicator join.
+        * @brief Wait until a running replicator thread ends.
+        */
+        void join();
+
         /** SGReplicator restart.
         * @brief Stops (if necessary) and restarts the replicator. Useful for changing the configuration. 
         */
         void restart();
+
+
+        /** SGReplicator free.
+        * @brief Free the replicator (make sure to stop() it first and wait till it ends).
+        */
+        void free();
 
         /** SGReplicator addChangeListener.
         * @brief Adds the callback function to the replicator's onStatusChanged event.
