@@ -57,8 +57,8 @@ namespace Strata {
 
     SGReplicator::~SGReplicator() {
         stop();
-        c4repl_free(c4replicator_);
-        c4replicator_ = nullptr;
+        join();
+        free();
     }
 
     SGReplicator::SGReplicator(SGReplicatorConfiguration *replicator_configuration): SGReplicator() {
@@ -68,11 +68,29 @@ namespace Strata {
 
     void SGReplicator::stop() {
         lock_guard<mutex> lock(replicator_lock_);
-        if(c4replicator_ != nullptr){
+        if(c4replicator_ != nullptr) {
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopping;
             c4repl_stop(c4replicator_);
         }
         replicator_can_restart_ = false;
+    }
+
+    void SGReplicator::join() {
+        // first wait for the replicator to terminate
+        {
+            lock_guard<mutex> lock(replicator_lock_);
+            if(c4replicator_ != nullptr) {
+                while (c4repl_getStatus(c4replicator_).level != kC4Stopped)
+                    this_thread::sleep_for(chrono::milliseconds(1));
+            }
+        }
+
+        // then wait for the onStatusChanged event to be emitted and terminated
+        unsigned count = 0;     // in case the C4Replicator would fail to emit onStatusChanged event
+        while ((internal_status_ != Strata::SGReplicatorInternalStatus::kStopped) && (count < 200)) {
+            this_thread::sleep_for(chrono::milliseconds(1));
+            ++count;
+        }
     }
 
     SGReplicatorReturnStatus SGReplicator::start() {
@@ -134,6 +152,7 @@ namespace Strata {
         if(c4replicator_ == nullptr){
             logC4Error(c4error_);
             DEBUG("Replication failed.\n");
+            internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
             return SGReplicatorReturnStatus::kInternalError;
         }
 
@@ -167,46 +186,47 @@ namespace Strata {
         return  replicator_configuration_ != nullptr && replicator_configuration_->isValid();
     }
 
-    void SGReplicator::addChangeListener(
-            const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> &callback) {
+    void SGReplicator::addChangeListener(const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> &callback) {
         on_status_changed_callback_ = callback;
-        replicator_parameters_.onStatusChanged = [](C4Replicator *replicator, C4ReplicatorStatus replicator_status,
-                                                    void *context) {
+        replicator_parameters_.onStatusChanged = [](C4Replicator *replicator, C4ReplicatorStatus replicator_status, void *context) {
             DEBUG("onStatusChanged: %d\n", replicator_status.level);
-            SGReplicatorProgress progress;
-            progress.total = replicator_status.progress.unitsTotal;
-            progress.completed = replicator_status.progress.unitsCompleted;
-            progress.document_count = replicator_status.progress.documentCount;
-            ((SGReplicator *) context)->on_status_changed_callback_((SGReplicator::ActivityLevel) replicator_status.level, progress);
 
             SGReplicator *ref = ((SGReplicator *) context);
-            if(ref && replicator) {
-                if(replicator_status.level == kC4Stopped) {
-                    {
-                        lock_guard<mutex> lock(ref->replicator_lock_);
-                        c4repl_free(ref->c4replicator_);
-                        ref->c4replicator_ = nullptr;
-                        ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
-                    }
+            if(ref != nullptr) {
+                SGReplicatorProgress progress;
+                progress.total = replicator_status.progress.unitsTotal;
+                progress.completed = replicator_status.progress.unitsCompleted;
+                progress.document_count = replicator_status.progress.documentCount;
+                ref->on_status_changed_callback_((SGReplicator::ActivityLevel) replicator_status.level, progress);
 
-                    // Error code == 0 means no errors were found
-                    // In that case, do not restart since stopping was intentional
-                    if(replicator_status.error.code != 0 &&
-                       ref->getReplicatorConfig()->getReconnectionPolicy() == SGReplicatorConfiguration::ReconnectionPolicy::kAutomaticallyReconnect &&
-                       ref->replicator_can_restart_)
-                    {
-                        DEBUG("Disconnection detected. Attempting to reconnect in %d seconds...\n", ref->getReplicatorConfig()->getReconnectionTimer());
-                        ref->automatedRestart(ref->getReplicatorConfig()->getReconnectionTimer());
+                if(replicator != nullptr) {
+                    if(replicator_status.level == kC4Stopped) {
+                        ref->free();
+                        // Error code == 0 means no errors were found
+                        // In that case, do not restart since stopping was intentional
+                        if(replicator_status.error.code != 0 &&
+                           ref->replicator_can_restart_ &&
+                           ref->getReplicatorConfig()->getReconnectionPolicy() == SGReplicatorConfiguration::ReconnectionPolicy::kAutomaticallyReconnect)
+                        {
+                            DEBUG("Disconnection detected. Attempting to reconnect in %d seconds...\n", ref->getReplicatorConfig()->getReconnectionTimer());
+                            ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
+                            ref->automatedRestart(ref->getReplicatorConfig()->getReconnectionTimer());
+                        }
+                        // The restart() function was called ("manual" restart)
+                        else if(replicator_status.error.code == 0 && ref->manual_restart_requested_) {
+                            ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
+                            ref->start();
+                        }
+                        else {
+                            ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;   // do not use ref after this point
+                        }
                     }
-                    // The restart() function was called ("manual" restart)
-                    else if(replicator_status.error.code == 0 && ref->manual_restart_requested_) {
-                        ref->start();
+                    else {
+                        ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
                     }
-                }
-                else {
-                    ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStarted;
                 }
             }
+            DEBUG("onStatusChanged ended\n");
         };
     }
 
@@ -217,6 +237,14 @@ namespace Strata {
         }
         manual_restart_requested_ = true;
         stop();
+    }
+
+    void SGReplicator::free() {
+        lock_guard<mutex> lock(replicator_lock_);
+        if(c4replicator_ != nullptr) {
+            c4repl_free(c4replicator_);
+            c4replicator_ = nullptr;
+        }
     }
 
     SGReplicatorReturnStatus SGReplicator::automatedRestart(const int &delay_seconds = 0) {
