@@ -23,15 +23,11 @@
 //  limitations under the License.
 
 #include "SGURLEndpoint.h"
+#include "SGLoggingCategories.h"
 #include <fleece/FleeceImpl.hh>
+
 using namespace std;
 using namespace fleece;
-
-#ifdef SHOW_DATABASE_MESSAGES
- #define DEBUG(...) printf("SGURLEndpoint: "); printf(__VA_ARGS__)
-#else
- #define DEBUG(...) //
-#endif 
 
 namespace Strata {
     SGURLEndpoint::SGURLEndpoint() {
@@ -64,7 +60,7 @@ namespace Strata {
             return false;
         }
 
-        DEBUG("c4address_fromURL is valid\n");
+        qC4Debug(logDomainSGURLEndpoint, "c4address_fromURL is valid");
         setHost( slice(c4address_.hostname).asString() );
         // HACK
         setPath( slice(dbname).asString() );

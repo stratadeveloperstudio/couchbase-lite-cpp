@@ -28,16 +28,11 @@
 
 #include "SGReplicator.h"
 #include "SGUtility.h"
+#include "SGLoggingCategories.h"
 
 using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
-
-#ifdef SHOW_DATABASE_MESSAGES
- #define DEBUG(...) printf("SGReplicator: "); printf(__VA_ARGS__)
-#else
- #define DEBUG(...) //
-#endif 
 
 namespace Strata {
     SGReplicator::SGReplicator() {
@@ -118,9 +113,9 @@ namespace Strata {
         // Callback function for outgoing revision event
         // This is used for log purposes!
         replicator_parameters_.pushFilter = [](C4String docID, C4RevisionFlags ref, FLDict body, void *context) {
-            DEBUG("pushFilter\n");
+            qC4Debug(logDomainSGReplicator, "pushFilter");
             alloc_slice fleece_body = FLValue_ToJSON((FLValue) body);
-            DEBUG("Doc ID: %s, pushing body json:%s\n", slice(docID).asString().c_str(),
+            qC4Debug(logDomainSGReplicator, "Doc ID: %s, pushing body json:%s", slice(docID).asString().c_str(),
                   fleece_body.asString().c_str());
             return true;
         };
@@ -150,8 +145,7 @@ namespace Strata {
         );
 
         if(c4replicator_ == nullptr){
-            logC4Error(c4error_);
-            DEBUG("Replication failed.\n");
+            qC4Critical(logDomainSGReplicator, "Replication failed: %s --", C4ErrorToString(c4error_).c_str());
             internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
             return SGReplicatorReturnStatus::kInternalError;
         }
@@ -177,7 +171,7 @@ namespace Strata {
                 replicator_parameters_.pull = kC4Continuous;
                 break;
             default:
-                DEBUG("No replicator type has been provided.");
+                qC4Warning(logDomainSGReplicator, "No replicator type has been provided.");
                 break;
         }
     }
@@ -189,7 +183,7 @@ namespace Strata {
     void SGReplicator::addChangeListener(const std::function<void(SGReplicator::ActivityLevel, SGReplicatorProgress progress)> &callback) {
         on_status_changed_callback_ = callback;
         replicator_parameters_.onStatusChanged = [](C4Replicator *replicator, C4ReplicatorStatus replicator_status, void *context) {
-            DEBUG("onStatusChanged: %d\n", replicator_status.level);
+            qC4Debug(logDomainSGReplicator, "onStatusChanged: %d", replicator_status.level);
 
             SGReplicator *ref = ((SGReplicator *) context);
             if(ref != nullptr) {
@@ -208,7 +202,7 @@ namespace Strata {
                            ref->replicator_can_restart_ &&
                            ref->getReplicatorConfig()->getReconnectionPolicy() == SGReplicatorConfiguration::ReconnectionPolicy::kAutomaticallyReconnect)
                         {
-                            DEBUG("Disconnection detected. Attempting to reconnect in %d seconds...\n", ref->getReplicatorConfig()->getReconnectionTimer());
+                            qC4Info(logDomainSGReplicator, "Disconnection detected. Attempting to reconnect in %d seconds...", ref->getReplicatorConfig()->getReconnectionTimer());
                             ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
                             ref->automatedRestart(ref->getReplicatorConfig()->getReconnectionTimer());
                         }
@@ -226,7 +220,7 @@ namespace Strata {
                     }
                 }
             }
-            DEBUG("onStatusChanged ended\n");
+            qC4Debug(logDomainSGReplicator, "onStatusChanged ended");
         };
     }
 
@@ -253,11 +247,11 @@ namespace Strata {
         }
         
         if(!replicator_can_restart_) {
-            DEBUG("Unable to restart replicator.\n");
+            qC4Warning(logDomainSGReplicator, "Unable to restart replicator.");
             return SGReplicatorReturnStatus::kStillRunning;
         }
 
-        DEBUG("Attempting to reconnect now.\n");
+        qC4Info(logDomainSGReplicator, "Attempting to reconnect now.");
         return this->start();
     }
 
@@ -280,15 +274,14 @@ namespace Strata {
                 C4Error c4error;
 
                 if(!c4db_beginTransaction(db, &c4error)) {
-                    logC4Error(c4error);
-                    DEBUG("c4db_beginTransaction Error\n");
+                    qC4Critical(logDomainSGReplicator, "c4db_beginTransaction Error: %s --", C4ErrorToString(c4error).c_str());
                     return;
                 }
 
                 C4Document *doc = c4doc_get(db, slice(docID), true, &c4error);
 
                 if(!doc) {
-                    DEBUG("Document returned nullptr, aborting.\n");
+                    qC4Critical(logDomainSGReplicator, "Document returned nullptr, aborting.");
                     return;
                 }
 
@@ -298,29 +291,24 @@ namespace Strata {
                 }
 
                 if(!c4doc_resolveConflict(doc, revID, doc->revID, nullslice, flags, &c4error)) {
-                    logC4Error(c4error);
-                    DEBUG("c4doc_resolveConflict Error\n");
+                    qC4Critical(logDomainSGReplicator, "c4doc_resolveConflict Error: %s --", C4ErrorToString(c4error).c_str());
                     return;
                 }
 
                 if(!c4doc_save(doc, 20, &c4error)) {
-                    logC4Error(c4error);
-                    DEBUG("c4doc_save Error\n");
+                    qC4Critical(logDomainSGReplicator, "c4doc_save Error: %s --", C4ErrorToString(c4error).c_str());
                     return;
                 }
 
                 if(!c4db_endTransaction(db, true, &c4error)) {
-                    logC4Error(c4error);
-                    DEBUG("c4db_endTransaction Error\n");
+                    qC4Critical(logDomainSGReplicator, "c4db_endTransaction Error: %s --", C4ErrorToString(c4error).c_str());
                     return;
                 }
 
-                DEBUG("Resolved conflict in document '%s' to the remote revision.\n", slice(docID).asString().c_str());
+                qC4Info(logDomainSGReplicator, "Resolved conflict in document '%s' to the remote revision.", slice(docID).asString().c_str());
             }
-
-            alloc_slice error_message = c4error_getDescription(error);
             ((SGReplicator *) context)->on_document_error_callback_(pushing, slice(docID).asString(),
-                                                                    error_message.asString(), error.code > 0,
+                                                                    C4ErrorToString(error), error.code > 0,
                                                                     errorIsTransient);
         };
     }
@@ -328,9 +316,9 @@ namespace Strata {
     void SGReplicator::addValidationListener(
             const std::function<void(const std::string &doc_id, const std::string &json_body)> &callback) {
         on_validation_callback_ = callback;
-        DEBUG("addValidationListener\n");
+        qC4Debug(logDomainSGReplicator, "addValidationListener");
         replicator_parameters_.validationFunc = [](C4String docID, C4RevisionFlags ref, FLDict body, void *context) {
-            DEBUG("validationFunc\n");
+            qC4Debug(logDomainSGReplicator, "validationFunc");
 
             alloc_slice fleece_json_string = FLValue_ToJSON((FLValue) body);
             ((SGReplicator *) context)->on_validation_callback_(slice(docID).asString(), fleece_json_string.asString());

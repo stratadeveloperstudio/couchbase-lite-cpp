@@ -1,5 +1,5 @@
 //
-//  SGUtility.h
+//  SGLoggingC4Categories.h
 //
 //  Copyright 2014 ON Semiconductor.
 //  All rights reserved. This software and/or documentation is licensed by ON Semiconductor under
@@ -22,13 +22,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef SGUTILITY_H
-#define SGUTILITY_H
-#include <litecore/c4.h>
-#include <string>
+#ifndef SGLOGGINGCATEGORIES_H
+#define SGLOGGINGCATEGORIES_H
+#include "SGLogging.h"
 
 namespace Strata {
-
-    std::string C4ErrorToString(const C4Error &err);
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGDatabase)
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGDocument)
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGMutableDocument)
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGPath)
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGReplicator)
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGURLEndpoint)
 }
-#endif //SGUTILITY_H
+#endif //SGLOGGINGCATEGORIES_H
