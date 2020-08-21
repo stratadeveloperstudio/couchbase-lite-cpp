@@ -40,25 +40,10 @@
 
 #ifdef SHOW_DATABASE_MESSAGES
 
-#if !defined(QT_NO_DEBUG_OUTPUT)
 #  define qC4Debug(category, FMT, ...) C4LogToAt(category(), kC4LogDebug,   FMT, ## __VA_ARGS__)
-#else
-#  define qC4Debug(category, FMT, ...)
-#endif
-
-#if !defined(QT_NO_INFO_OUTPUT)
 #  define qC4Info(category, FMT, ...) C4LogToAt(category(), kC4LogInfo,   FMT, ## __VA_ARGS__)
-#else
-#  define qC4Info(category, FMT, ...)
-#endif
-
-#if !defined(QT_NO_WARNING_OUTPUT)
 #  define qC4Warning(category, FMT, ...) C4LogToAt(category(), kC4LogWarning,   FMT, ## __VA_ARGS__)
-#else
-#  define qC4Warning(category, FMT, ...)
-#endif
-
-#define qC4Critical(category, FMT, ...) C4LogToAt(category(), kC4LogError,   FMT, ## __VA_ARGS__)
+#  define qC4Critical(category, FMT, ...) C4LogToAt(category(), kC4LogError,   FMT, ## __VA_ARGS__)
 
 #else
 
