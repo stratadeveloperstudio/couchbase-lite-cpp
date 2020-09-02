@@ -30,3 +30,16 @@ index b353b185..6c3c562c 100644
          }
 
          ~CivetWebSocket() {
+diff --git a/Replicator/Replicator.cc b/Replicator/Replicator.cc
+index 0bd8f4c4..6a338d17 100644
+--- a/Replicator/Replicator.cc
++++ b/Replicator/Replicator.cc
+@@ -174,7 +174,7 @@ namespace litecore { namespace repl {
+             case Connection::kDisconnected:
+             case Connection::kClosed:
+                 // After connection closes, remain active while I wait for db to finish writes:
+-                level = (_dbStatus.level == kC4Busy) ? kC4Busy : kC4Stopped;
++                level = (max(max(Worker::computeActivityLevel(), _dbStatus.level), max(_pushStatus.level, _pullStatus.level)) == kC4Busy) ? kC4Busy : kC4Stopped;
+                 break;
+         }
+         if (SyncBusyLog.effectiveLevel() <= LogLevel::Info) {
