@@ -17,6 +17,7 @@ add_subdirectory(vendor)
 set(CB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/couchbase-lite-core")
 
 add_library(${PROJECT_NAME}
+    src/SGLoggingCategories.cpp
     src/SGDatabase.cpp
     src/SGDocument.cpp
     src/SGMutableDocument.cpp

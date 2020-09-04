@@ -1,5 +1,5 @@
 //
-//  SGUtility.h
+//  SGLogging.h
 //
 //  Copyright 2014 ON Semiconductor.
 //  All rights reserved. This software and/or documentation is licensed by ON Semiconductor under
@@ -22,13 +22,36 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef SGUTILITY_H
-#define SGUTILITY_H
+#ifndef SGLOGGING_H
+#define SGLOGGING_H
 #include <litecore/c4.h>
-#include <string>
+#include <litecore/Logging.hh>
 
-namespace Strata {
+#define Q_DECLARE_C4_LOGGING_CATEGORY(name) \
+    extern C4LogDomain &name();
 
-    std::string C4ErrorToString(const C4Error &err);
-}
-#endif //SGUTILITY_H
+#define Q_C4_LOGGING_CATEGORY(name, ...) \
+    C4LogDomain &name() \
+    { \
+        static litecore::LogDomain logdomain(__VA_ARGS__, litecore::LogLevel::Debug); \
+        static C4LogDomain c4logdomain = (C4LogDomain)&logdomain; \
+        return c4logdomain; \
+    }
+
+#ifdef SHOW_DATABASE_MESSAGES
+
+#  define qC4Debug(category, FMT, ...) C4LogToAt(category(), kC4LogDebug,   FMT, ## __VA_ARGS__)
+#  define qC4Info(category, FMT, ...) C4LogToAt(category(), kC4LogInfo,   FMT, ## __VA_ARGS__)
+#  define qC4Warning(category, FMT, ...) C4LogToAt(category(), kC4LogWarning,   FMT, ## __VA_ARGS__)
+#  define qC4Critical(category, FMT, ...) C4LogToAt(category(), kC4LogError,   FMT, ## __VA_ARGS__)
+
+#else
+
+#  define qC4Debug(category, FMT, ...)
+#  define qC4Info(category, FMT, ...)
+#  define qC4Warning(category, FMT, ...)
+#  define qC4Critical(category, FMT, ...)
+
+#endif
+
+#endif //SGLOGGING_H

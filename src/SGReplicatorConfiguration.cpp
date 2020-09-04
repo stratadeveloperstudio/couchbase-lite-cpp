@@ -28,12 +28,6 @@ using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
 
-#ifdef SHOW_DATABASE_MESSAGES
- #define DEBUG(...) printf("SGReplicatorConfiguration: "); printf(__VA_ARGS__)
-#else
- #define DEBUG(...) //
-#endif 
-
 namespace Strata {
     SGReplicatorConfiguration::SGReplicatorConfiguration() {
         replicator_type_ = ReplicatorType::kPull;

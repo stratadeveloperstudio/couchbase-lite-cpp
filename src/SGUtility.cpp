@@ -24,10 +24,12 @@
 
 #include "SGUtility.h"
 #include <fleece/FleeceImpl.hh>
+
 namespace Strata {
 
-    void logC4Error(const C4Error &err){
+    std::string C4ErrorToString(const C4Error &err)
+    {
         fleece::alloc_slice error_message = c4error_getDescription(err);
-        printf("%s -- ", error_message.asString().c_str());
+        return error_message.asString();
     }
 }

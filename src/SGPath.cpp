@@ -23,14 +23,9 @@
 //  limitations under the License.
 
 #include "SGPath.h"
+#include "SGLoggingCategories.h"
 #include <litecore/FilePath.hh>
 #include <litecore/Error.hh>
-
-#ifdef SHOW_DATABASE_MESSAGES
- #define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
-#else
- #define DEBUG(...) //
-#endif 
 
 using namespace litecore;
 namespace Strata {
@@ -62,11 +57,11 @@ namespace Strata {
         if(!filePath.exists()){
             try{
                 if(!filePath.mkdir()){
-                    DEBUG("Error creating %s directory\n", path_.c_str());
+                    qC4Warning(logDomainSGPath, "Error creating %s directory", path_.c_str());
                     return false;
                 }
             }catch(const litecore::error& err){
-                DEBUG("Something went wrong! %s ... Code:%d\n", err.what(), err.code);
+                qC4Critical(logDomainSGPath, "Something went wrong! %s ... Code:%d", err.what(), err.code);
                 return false;
             }
         }

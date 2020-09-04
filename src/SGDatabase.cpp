@@ -35,16 +35,11 @@
 #include "SGDocument.h"
 #include "SGUtility.h"
 #include "SGPath.h"
+#include "SGLoggingCategories.h"
 
 using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
-
-#ifdef SHOW_DATABASE_MESSAGES
- #define DEBUG(...) printf("SGDatabase: "); printf(__VA_ARGS__)
-#else
- #define DEBUG(...) //
-#endif 
 
 namespace Strata {
     SGDatabase::SGDatabase() {}
@@ -77,26 +72,25 @@ namespace Strata {
     }
 
     SGDatabaseReturnStatus SGDatabase::open() {
-
         lock_guard<mutex> lock(db_lock_);
-        DEBUG("Calling open\n");
+        qC4Debug(logDomainSGDatabase, "Calling open");
 
         // Check for empty db name
         if (db_name_.empty()) {
-            DEBUG("DB name can't be empty! \n");
+            qC4Critical(logDomainSGDatabase, "DB name can't be empty!");
             return SGDatabaseReturnStatus::kDBNameError;
         }
 
         SGPath path(db_path_);
 
         if( !path.isValidDir() ){
-            DEBUG("Not valid path!\n");
+            qC4Critical(logDomainSGDatabase, "Not valid path!");
             return SGDatabaseReturnStatus::kInvalidDBPath;
         }
 
         path.addChildDir(kSGDatabasesDirectory_);
         if(!path.mkdir()){
-            DEBUG("Failed to create databases dir\n");
+            qC4Critical(logDomainSGDatabase, "Failed to create databases dir");
             return SGDatabaseReturnStatus::kCreateDBDirectoryError;
         }
 
@@ -108,13 +102,12 @@ namespace Strata {
         c4db_config_.encryptionKey.algorithm = kC4EncryptionNone;
 
         path.addChildDir(db_name_);
-        DEBUG("Full db path: %s\n", path.getPath().c_str());
+        qC4Debug(logDomainSGDatabase, "Full db path: %s", path.getPath().c_str());
 
         c4db_ = c4db_open(slice(path.getPath()), &c4db_config_, &c4error_);
 
         if(c4db_ == nullptr){
-            logC4Error(c4error_);
-            DEBUG("Error opening the db: %s\n", path.getPath().c_str());
+            qC4Critical(logDomainSGDatabase, "Error opening the db: %s, error: %s --", path.getPath().c_str(), C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kOpenDBError;
         }
 
@@ -132,15 +125,15 @@ namespace Strata {
 
     SGDatabaseReturnStatus SGDatabase::close() {
         lock_guard<mutex> lock(db_lock_);
-        DEBUG("Calling close\n");
+        qC4Debug(logDomainSGDatabase, "Calling close");
 
         if( !_isOpen() ){
-            DEBUG("Calling close on non opened DB\n");
+            qC4Critical(logDomainSGDatabase, "Calling close on non opened DB");
             return SGDatabaseReturnStatus::kCloseDBError;
         }
 
         if(!c4db_close(c4db_, &c4error_)){
-            logC4Error(c4error_);
+            qC4Critical(logDomainSGDatabase, "Could not close db: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kCloseDBError;
         }
 
@@ -149,7 +142,7 @@ namespace Strata {
         // c4db_free Deallocate but won't set c4db_ to nullptr
         c4db_ = nullptr;
 
-        DEBUG("Leaving close\n");
+        qC4Debug(logDomainSGDatabase, "Leaving close");
         return SGDatabaseReturnStatus::kNoError;
     }
 
@@ -160,15 +153,14 @@ namespace Strata {
 
     SGDatabaseReturnStatus SGDatabase::_createNewDocument(SGDocument *doc, alloc_slice body) {
         // Document does not exist. Creating a new one
-        DEBUG("Creating a new document\n");
+        qC4Debug(logDomainSGDatabase, "Creating a new document");
 
         C4RevisionFlags revisionFlags = kRevNew;
 
         C4Document *newdoc = c4doc_create(c4db_, slice(doc->getId()), body, revisionFlags, &c4error_);
 
         if(newdoc == nullptr){
-            logC4Error(c4error_);
-            DEBUG("Could not create new document.");
+            qC4Critical(logDomainSGDatabase, "Could not create new document: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kCreateDocumentError;
         }
         doc->setC4document(newdoc);
@@ -177,15 +169,14 @@ namespace Strata {
 
     SGDatabaseReturnStatus SGDatabase::_updateDocument(SGDocument *doc, alloc_slice new_body) {
         // Document exist. Make modifications to the body
-        DEBUG("document Exist. Working on updating the document: %s\n", doc->getId().c_str());
+        qC4Debug(logDomainSGDatabase, "document Exist. Working on updating the document: %s", doc->getId().c_str());
         string rev_id = slice(doc->c4document_->revID).asString();
-        DEBUG("REV id: %s\n", rev_id.c_str());
+        qC4Debug(logDomainSGDatabase, "REV id: %s\n", rev_id.c_str());
 
         C4Document *newdoc = c4doc_update(doc->c4document_, new_body, doc->c4document_->selectedRev.flags, &c4error_);
 
         if(newdoc == nullptr){
-            logC4Error(c4error_);
-            DEBUG("Could not update the body of an existing document.\n");
+            qC4Critical(logDomainSGDatabase, "Could not update the body of an existing document: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kUpdatDocumentError;
         }
 
@@ -196,15 +187,15 @@ namespace Strata {
 
     SGDatabaseReturnStatus SGDatabase::save(SGDocument *doc) {
         lock_guard<mutex> lock(db_lock_);
-        DEBUG("Calling save\n");
+        qC4Debug(logDomainSGDatabase, "Calling save\n");
 
         if(!_isOpen()){
-            DEBUG("Calling save() while DB is not open\n");
+            qC4Critical(logDomainSGDatabase, "Calling save() while DB is not open");
             return SGDatabaseReturnStatus::kOpenDBError;
         }
 
         if(doc == nullptr){
-            DEBUG("Passing uninitialized/invalid SGDocument to save()\n");
+            qC4Critical(logDomainSGDatabase, "Passing uninitialized/invalid SGDocument to save()");
             return SGDatabaseReturnStatus::kInvalidArgumentError;
         }
 
@@ -215,13 +206,12 @@ namespace Strata {
         try{
             fleece_data = JSONConverter::convertJSON(doc->mutable_dict_->toJSONString());
         }catch (const FleeceException& e){
-            DEBUG("Convert body error: %s\n", e.what());
+            qC4Critical(logDomainSGDatabase, "Convert body error: %s", e.what());
             return SGDatabaseReturnStatus::kInvalidDocBody;
         }
 
         if(!c4db_beginTransaction(c4db_, &c4error_)){
-            logC4Error(c4error_);
-            DEBUG("save kBeginTransactionError\n");
+            qC4Critical(logDomainSGDatabase, "save kBeginTransactionError: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kBeginTransactionError;
         }
 
@@ -235,12 +225,11 @@ namespace Strata {
         }
 
         if(!c4db_endTransaction(c4db_, true, &c4error_)){
-            logC4Error(c4error_);
-            DEBUG("save kEndTransactionError\n");
+            qC4Critical(logDomainSGDatabase, "save kEndTransactionError: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kEndTransactionError;
         }
 
-        DEBUG("Leaving save\n");
+        qC4Debug(logDomainSGDatabase, "Leaving save");
         return status;
     }
 
@@ -252,23 +241,21 @@ namespace Strata {
         }
 
         C4Document *c4doc;
-        DEBUG("START getDocumentById: %s\n", doc_id.c_str());
+        qC4Debug(logDomainSGDatabase, "START getDocumentById: %s", doc_id.c_str());
 
         if(!c4db_beginTransaction(c4db_, &c4error_)){
-            logC4Error(c4error_);
-            DEBUG("getDocumentById starting transaction failed on document %s\n", doc_id.c_str());
+            qC4Critical(logDomainSGDatabase, "getDocumentById starting transaction failed on document %s, error: %s --", doc_id.c_str(), C4ErrorToString(c4error_).c_str());
             return nullptr;
         }
 
         c4doc = c4doc_get(c4db_, slice(doc_id), true, &c4error_);
 
         if(!c4db_endTransaction(c4db_, true, &c4error_)){
-            logC4Error(c4error_);
-            DEBUG("getDocumentById ending transaction failed on document %s\n", doc_id.c_str());
+            qC4Critical(logDomainSGDatabase, "getDocumentById ending transaction failed on document %s", doc_id.c_str());
             return nullptr;
         }
 
-        DEBUG("END getDocumentById: %s\n", doc_id.c_str());
+        qC4Debug(logDomainSGDatabase, "END getDocumentById: %s", doc_id.c_str());
         return c4doc;
     }
 
@@ -276,29 +263,27 @@ namespace Strata {
         lock_guard<mutex> lock(db_lock_);
 
         if(!_isOpen()){
-            DEBUG("Calling deleteDocument() while DB is not open\n");
+            qC4Critical(logDomainSGDatabase, "Calling deleteDocument() while DB is not open");
             return SGDatabaseReturnStatus::kOpenDBError;
         }
 
         if(doc == nullptr){
-            DEBUG("Passing uninitialized/invalid SGDocument to deleteDocument()\n");
+            qC4Critical(logDomainSGDatabase, "Passing uninitialized/invalid SGDocument to deleteDocument()");
             return SGDatabaseReturnStatus::kInvalidArgumentError;
         }
 
         if(!c4db_beginTransaction(c4db_, &c4error_)){
-            logC4Error(c4error_);
-            DEBUG("deleteDocument kBeginTransactionError\n");
+            qC4Critical(logDomainSGDatabase, "deleteDocument kBeginTransactionError: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kBeginTransactionError;
         }
 
-        DEBUG("START deleteDocument: %s\n", doc->getId().c_str());
+        qC4Debug(logDomainSGDatabase, "START deleteDocument: %s\n", doc->getId().c_str());
 
         // Try to delete the document
         bool is_deleted = c4db_purgeDoc(c4db_, slice(doc->getId()), &c4error_);
 
         if(!c4db_endTransaction(c4db_, true, &c4error_)){
-            logC4Error(c4error_);
-            DEBUG("deleteDocument kEndTransactionError\n");
+            qC4Critical(logDomainSGDatabase, "deleteDocument kEndTransactionError: %s --", C4ErrorToString(c4error_).c_str());
             return SGDatabaseReturnStatus::kEndTransactionError;
         }
 
@@ -306,12 +291,12 @@ namespace Strata {
             return SGDatabaseReturnStatus::kDeleteDocumentError;
         }
 
-        DEBUG("Document %s deleted\n", doc->getId().c_str());
+        qC4Info(logDomainSGDatabase, "Document %s deleted", doc->getId().c_str());
 
         doc->setId(string());
         doc->setC4document(nullptr);
 
-        DEBUG("END deleteDocument: %s\n", doc->getId().c_str());
+        qC4Debug(logDomainSGDatabase, "END deleteDocument: %s", doc->getId().c_str());
         return SGDatabaseReturnStatus::kNoError;
     }
 
@@ -319,7 +304,7 @@ namespace Strata {
         lock_guard<mutex> lock(db_lock_);
 
         if(!_isOpen()){
-            DEBUG("Trying to run database query while DB is not open!\n");
+            qC4Warning(logDomainSGDatabase, "Trying to run database query while DB is not open!");
             return false;
         }
 
@@ -337,19 +322,16 @@ namespace Strata {
                         slice doc_name = FLValue_AsString(FLArrayIterator_GetValueAt(&query_enumerator->columns, 0));
                         document_keys.push_back(doc_name.asString());
                     }else{
-                        logC4Error(c4error_);
-                        DEBUG("c4queryenum_next failed to run.\n");
+                        qC4Critical(logDomainSGDatabase, "c4queryenum_next failed to run: %s --", C4ErrorToString(c4error_).c_str());
                         return false;
                     }
                 }
             }else{
-                logC4Error(c4error_);
-                DEBUG("C4QueryEnumerator failed to run.\n");
+                qC4Critical(logDomainSGDatabase, "C4QueryEnumerator failed to run: %s --", C4ErrorToString(c4error_).c_str());
                 return false;
             }
         }else{
-            logC4Error(c4error_);
-            DEBUG("C4Query failed to execute a query.\n");
+            qC4Critical(logDomainSGDatabase, "C4Query failed to execute a query: %s --", C4ErrorToString(c4error_).c_str());
             return false;
         }
 

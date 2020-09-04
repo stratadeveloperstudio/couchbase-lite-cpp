@@ -24,15 +24,10 @@
 
 #include <string>
 #include "SGDocument.h"
+#include "SGLoggingCategories.h"
 
 using fleece::impl::Value;
 using namespace std;
-
-#ifdef SHOW_DATABASE_MESSAGES
- #define DEBUG(...) printf("SGDocument: "); printf(__VA_ARGS__)
-#else
- #define DEBUG(...) //
-#endif 
 
 namespace Strata {
     SGDocument::SGDocument() {}
@@ -79,12 +74,12 @@ namespace Strata {
     void SGDocument::initMutableDict() {
         if(exist()) {
             mutable_dict_ = fleece::impl::MutableDict::newDict(Value::fromData(c4document_->selectedRev.body)->asDict());
-            DEBUG("Doc Id: %s, body: %s, revision:%s\n", id_.c_str(), getBody().c_str(), fleece::slice(c4document_->selectedRev.revID).asString().c_str());
+            qC4Debug(logDomainSGDocument, "Doc Id: %s, body: %s, revision:%s", id_.c_str(), getBody().c_str(), fleece::slice(c4document_->selectedRev.revID).asString().c_str());
             return;
         }
         // Init a new mutable dict
         mutable_dict_ = fleece::impl::MutableDict::newDict();
-        DEBUG("c4document_ is null\n");
+        qC4Debug(logDomainSGDocument, "c4document_ is null");
     }
 
     const fleece::impl::Value *SGDocument::get(const std::string &keyToFind) {
