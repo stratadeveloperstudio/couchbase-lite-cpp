@@ -15,7 +15,10 @@ if(APPLE)
     endif()
 endif()
 
-add_executable(${PROJECT_NAME} sgcouchbaselite.cpp)
+add_executable(${PROJECT_NAME}
+    sgcouchbaselite.cpp
+    sgloggingcategories.cpp
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     CouchbaseLiteCPP
@@ -26,4 +29,8 @@ if(APPLE)
         PRIVATE ${FOUNDATION_LIBRARY}
         PRIVATE ${CORE_FOUNDATION}
     )
+endif()
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SHOW_DATABASE_MESSAGES)
 endif()
