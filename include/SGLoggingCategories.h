@@ -22,8 +22,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef SGLOGGINGCATEGORIES_H
-#define SGLOGGINGCATEGORIES_H
+#pragma once
 #include "SGLogging.h"
 
 namespace Strata {
@@ -34,4 +33,3 @@ namespace Strata {
     Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGReplicator)
     Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGURLEndpoint)
 }
-#endif //SGLOGGINGCATEGORIES_H

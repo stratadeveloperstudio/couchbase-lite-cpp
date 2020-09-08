@@ -30,11 +30,14 @@
 #define Q_DECLARE_C4_LOGGING_CATEGORY(name) \
     extern C4LogDomain &name();
 
-#define Q_C4_LOGGING_CATEGORY(name, ...) \
+#define Q_C4_LOGGING_CATEGORY(name, logName) \
     C4LogDomain &name() \
     { \
-        static litecore::LogDomain logdomain(__VA_ARGS__, litecore::LogLevel::Debug); \
-        static C4LogDomain c4logdomain = (C4LogDomain)&logdomain; \
+        static C4LogDomain c4logdomain = [](){ \
+            static litecore::LogDomain logdomain(logName, litecore::LogLevel::Debug); \
+            logdomain.setCallbackLogLevel(litecore::LogLevel::Debug); \
+            return (C4LogDomain)&logdomain; \
+        } (); \
         return c4logdomain; \
     }
 

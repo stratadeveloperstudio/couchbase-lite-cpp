@@ -208,6 +208,7 @@ namespace Strata {
                         }
                         // The restart() function was called ("manual" restart)
                         else if(replicator_status.error.code == 0 && ref->manual_restart_requested_) {
+                            qC4Debug(logDomainSGReplicator, "Replicator restart requested...");
                             ref->internal_status_ = Strata::SGReplicatorInternalStatus::kStopped;
                             ref->start();
                         }
