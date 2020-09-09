@@ -18,7 +18,7 @@ index 89fe9f8a..a8126072 100644
      add_definitions(-DCOUCHBASE_ENTERPRISE      # Tells LiteCore it's an EE build
                      -DSQLITE_HAS_CODEC          # Enables SQLite encryption extension (SEE)
 diff --git a/Replicator/CivetWebSocket.cc b/Replicator/CivetWebSocket.cc
-index b353b185..6c3c562c 100644
+index b353b185..625524cf 100644
 --- a/Replicator/CivetWebSocket.cc
 +++ b/Replicator/CivetWebSocket.cc
 @@ -120,7 +120,7 @@ namespace litecore { namespace websocket {
@@ -30,65 +30,105 @@ index b353b185..6c3c562c 100644
          }
 
          ~CivetWebSocket() {
+@@ -327,15 +327,21 @@ namespace litecore { namespace websocket {
+ 
+ 
+         void _sendCloseFrame(alloc_slice body) {
+-            if (_sendFrame(WEBSOCKET_OPCODE_CONNECTION_CLOSE, body))
++            if (_sendFrame(WEBSOCKET_OPCODE_CONNECTION_CLOSE, body)) {
+                 _sentCloseFrame = true;
++                this_thread::sleep_for(chrono::milliseconds(500));  // give some time for the normal close operation to finish
++            } else {
++                LogDebug("Error when trying to properly close the connection, closing by force");
++            }
++
++            onClosed(); // add to end of queue, in case the normal close operation finished this will do nothing, otherwise it will abruptly terminate connection
+         }
+ 
+ 
+         void _onClosed() {
+-            Log("Connection closed");
+             if (!_connection)
+                 return;
++            Log("Connection closed");
+             _connection = nullptr;
+             if (!_rcvdCloseFrame) {
+                 _closeStatus = c4error_make(WebSocketDomain, kWebSocketCloseAbnormal,
 diff --git a/Replicator/Puller.cc b/Replicator/Puller.cc
-index dda6761a..8df047cb 100644
+index dda6761a..32630b29 100644
 --- a/Replicator/Puller.cc
 +++ b/Replicator/Puller.cc
-@@ -295,13 +295,14 @@ namespace litecore { namespace repl {
+@@ -223,6 +223,10 @@ namespace litecore { namespace repl {
+ 
+     // Actually process an incoming "rev" now:
+     void Puller::startIncomingRev(MessageIn *msg) {
++        if(!connection()) {
++            logVerbose("startIncomingRev called after connection close, ignoring...");
++            return;
++        }
+         decrement(_pendingRevMessages);
+         increment(_activeIncomingRevs);
+         Retained<IncomingRev> inc;
+@@ -295,10 +299,11 @@ namespace litecore { namespace repl {
      
      Worker::ActivityLevel Puller::computeActivityLevel() const {
          ActivityLevel level;
 -        if (_fatalError) {
-+        if (_activeIncomingRevs > 0) {
++        if (Worker::computeActivityLevel() == kC4Busy) {    // some assync event is ongoing, do no terminate yet
 +            level = kC4Busy;
-+        } else if (_fatalError || !connected()) {
++        } else if (_fatalError || !connection()) {
              level = kC4Stopped;
-         } else if (Worker::computeActivityLevel() == kC4Busy
-                 || (!_caughtUp && nonPassive())
+-        } else if (Worker::computeActivityLevel() == kC4Busy
+-                || (!_caughtUp && nonPassive())
++        } else if ((!_caughtUp && nonPassive())
                  || _waitingForChangesCallback
--                || _pendingRevMessages > 0
--                || _activeIncomingRevs > 0) {
-+                || _pendingRevMessages > 0) {
-             level = kC4Busy;
-         } else if (_options.pull == kC4Continuous || isOpenServer()) {
-             const_cast<Puller*>(this)->_spareIncomingRevs.clear();
+                 || _pendingRevMessages > 0
+                 || _activeIncomingRevs > 0) {
 diff --git a/Replicator/Pusher.cc b/Replicator/Pusher.cc
-index dd349dac..c397c216 100644
+index dd349dac..80cd8677 100644
 --- a/Replicator/Pusher.cc
 +++ b/Replicator/Pusher.cc
-@@ -595,7 +595,9 @@ namespace litecore { namespace repl {
+@@ -595,8 +595,11 @@ namespace litecore { namespace repl {
  
      Worker::ActivityLevel Pusher::computeActivityLevel() const {
          ActivityLevel level;
 -        if (Worker::computeActivityLevel() == kC4Busy
-+        if (!connected()) {
+-                || (_started && !_caughtUp)
++        if (Worker::computeActivityLevel() == kC4Busy) {    // some assync event is ongoing, do no terminate yet
++            level = kC4Busy;
++        } else if (!connection()) {
 +            level = kC4Stopped;
-+        } else if (Worker::computeActivityLevel() == kC4Busy
-                 || (_started && !_caughtUp)
++        } else if((_started && !_caughtUp)
                  || _changeListsInFlight > 0
                  || _revisionsInFlight > 0
+                 || _blobsInFlight > 0
 diff --git a/Replicator/Replicator.cc b/Replicator/Replicator.cc
-index 0bd8f4c4..6a338d17 100644
+index 0bd8f4c4..563f6807 100644
 --- a/Replicator/Replicator.cc
 +++ b/Replicator/Replicator.cc
-@@ -174,7 +174,7 @@ namespace litecore { namespace repl {
+@@ -165,18 +165,18 @@ namespace litecore { namespace repl {
+                     level = kC4Busy;
+                 }
+                 DebugAssert(level > kC4Stopped);
+-                break;
+-            }
+-            case Connection::kClosing:
++            } break;
++            case Connection::kClosing: {
+                 // Remain active while I wait for the connection to finish closing:
+                 level = kC4Busy;
+-                break;
++            } break;
              case Connection::kDisconnected:
-             case Connection::kClosed:
+-            case Connection::kClosed:
++            case Connection::kClosed: {
                  // After connection closes, remain active while I wait for db to finish writes:
 -                level = (_dbStatus.level == kC4Busy) ? kC4Busy : kC4Stopped;
+-                break;
 +                level = (max(max(Worker::computeActivityLevel(), _dbStatus.level), max(_pushStatus.level, _pullStatus.level)) == kC4Busy) ? kC4Busy : kC4Stopped;
-                 break;
++            } break;
          }
++
          if (SyncBusyLog.effectiveLevel() <= LogLevel::Info) {
-diff --git a/Replicator/Worker.hh b/Replicator/Worker.hh
-index 5fed4793..a08a4401 100644
---- a/Replicator/Worker.hh
-+++ b/Replicator/Worker.hh
-@@ -157,6 +157,7 @@ namespace litecore { namespace repl {
- #if !DEBUG
-     protected:
- #endif
-+        bool connected() const                              {return _connection != nullptr;}
-         blip::Connection* connection() const                {return _connection;}
- 
-     protected:
+             logInfo("activityLevel=%-s: connectionState=%d",
+                 kC4ReplicatorActivityLevelNames[level], _connectionState);
