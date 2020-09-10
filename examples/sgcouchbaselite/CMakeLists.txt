@@ -30,7 +30,3 @@ if(APPLE)
         PRIVATE ${CORE_FOUNDATION}
     )
 endif()
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE SHOW_DATABASE_MESSAGES)
-endif()

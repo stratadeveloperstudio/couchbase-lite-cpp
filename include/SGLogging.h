@@ -41,20 +41,9 @@
         return c4logdomain; \
     }
 
-#ifdef SHOW_DATABASE_MESSAGES
-
 #  define qC4Debug(category, FMT, ...) C4LogToAt(category(), kC4LogDebug,   FMT, ## __VA_ARGS__)
 #  define qC4Info(category, FMT, ...) C4LogToAt(category(), kC4LogInfo,   FMT, ## __VA_ARGS__)
 #  define qC4Warning(category, FMT, ...) C4LogToAt(category(), kC4LogWarning,   FMT, ## __VA_ARGS__)
 #  define qC4Critical(category, FMT, ...) C4LogToAt(category(), kC4LogError,   FMT, ## __VA_ARGS__)
-
-#else
-
-#  define qC4Debug(category, FMT, ...)
-#  define qC4Info(category, FMT, ...)
-#  define qC4Warning(category, FMT, ...)
-#  define qC4Critical(category, FMT, ...)
-
-#endif
 
 #endif //SGLOGGING_H
