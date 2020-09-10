@@ -18,7 +18,7 @@ index 89fe9f8a..a8126072 100644
      add_definitions(-DCOUCHBASE_ENTERPRISE      # Tells LiteCore it's an EE build
                      -DSQLITE_HAS_CODEC          # Enables SQLite encryption extension (SEE)
 diff --git a/Replicator/CivetWebSocket.cc b/Replicator/CivetWebSocket.cc
-index b353b185..625524cf 100644
+index b353b185..b24646b9 100644
 --- a/Replicator/CivetWebSocket.cc
 +++ b/Replicator/CivetWebSocket.cc
 @@ -120,7 +120,7 @@ namespace litecore { namespace websocket {
@@ -30,19 +30,34 @@ index b353b185..625524cf 100644
          }
 
          ~CivetWebSocket() {
-@@ -327,15 +327,21 @@ namespace litecore { namespace websocket {
+@@ -149,6 +149,10 @@ namespace litecore { namespace websocket {
+ 
+         void onMessage(int headerByte, const alloc_slice &data) {
+             enqueue(&CivetWebSocket::_onMessage, headerByte, data);
++            if((headerByte & 0x0F) == WEBSOCKET_OPCODE_CONNECTION_CLOSE) {
++                std::unique_lock<std::mutex> lck(_mtx);
++                _cv.notify_all();
++            }
+         }
+ 
+         void close(int status, const alloc_slice &message) {
+@@ -327,15 +331,25 @@ namespace litecore { namespace websocket {
  
  
          void _sendCloseFrame(alloc_slice body) {
 -            if (_sendFrame(WEBSOCKET_OPCODE_CONNECTION_CLOSE, body))
++            std::unique_lock<std::mutex> lck(_mtx);
 +            if (_sendFrame(WEBSOCKET_OPCODE_CONNECTION_CLOSE, body)) {
                  _sentCloseFrame = true;
-+                this_thread::sleep_for(chrono::milliseconds(500));  // give some time for the normal close operation to finish
++                // give some time for the normal close operation to finish
++                if (_cv.wait_for(lck, std::chrono::milliseconds(500)) == std::cv_status::timeout) {
++                    LogDebug("Timeout when trying to properly close the connection, closing by force");
++                    onClosed();
++                }
 +            } else {
 +                LogDebug("Error when trying to properly close the connection, closing by force");
++                onClosed();
 +            }
-+
-+            onClosed(); // add to end of queue, in case the normal close operation finished this will do nothing, otherwise it will abruptly terminate connection
          }
  
  
@@ -54,6 +69,16 @@ index b353b185..625524cf 100644
              _connection = nullptr;
              if (!_rcvdCloseFrame) {
                  _closeStatus = c4error_make(WebSocketDomain, kWebSocketCloseAbnormal,
+@@ -345,7 +359,8 @@ namespace litecore { namespace websocket {
+             release(this); // balances retain() in _open()
+         }
+ 
+-
++        std::mutex _mtx;
++        std::condition_variable _cv;
+         litecore::repl::Address _address;
+         C4Socket* _c4socket;
+         AllocedDict _options;
 diff --git a/Replicator/Puller.cc b/Replicator/Puller.cc
 index dda6761a..32630b29 100644
 --- a/Replicator/Puller.cc
