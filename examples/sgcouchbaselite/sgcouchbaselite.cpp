@@ -28,13 +28,13 @@
 
 #include "SGFleece.h"
 #include "SGCouchBaseLite.h"
+#include "sgloggingcategories.h"
+
 using namespace std;
 using namespace fleece;
 using namespace fleece::impl;
 using namespace std::placeholders;
 using namespace Strata;
-
-#define DEBUG(...) printf("TEST SGLiteCore: "); printf(__VA_ARGS__)
 
 const char* activity_level_string[] = {"Stopped","Offline","Connecting","Idle", "Busy" };
 void onStatusChanged(SGReplicator::ActivityLevel level, SGReplicatorProgress progress){
@@ -42,10 +42,10 @@ void onStatusChanged(SGReplicator::ActivityLevel level, SGReplicatorProgress pro
     if(progress.total > 0){
         progress_percentage = (progress.completed / progress.total) *100;
     }
-    DEBUG("Replicator Activity Level: %s %f (%d/%d) \n", activity_level_string[(unsigned int)level], progress_percentage, progress.completed, progress.total);
+    qC4Debug(logDomainSGExample, "Replicator Activity Level: %s %f (%llu/%llu)", activity_level_string[(unsigned int)level], progress_percentage, progress.completed, progress.total);
 }
 void onDocumentEnded(bool pushing, std::string doc_id, std::string error_message, bool is_error,bool transient){
-    DEBUG("onDocumentError: pushing: %d, Doc Id: %s, is error: %d, error message: %s, transient:%d\n", pushing, doc_id.c_str(), is_error, error_message.c_str(), transient);
+    qC4Debug(logDomainSGExample, "onDocumentError: pushing: %d, Doc Id: %s, is error: %d, error message: %s, transient:%d", pushing, doc_id.c_str(), is_error, error_message.c_str(), transient);
 }
 
 // Mini object to show how to bind functions from another object
@@ -56,78 +56,79 @@ public:
     };
     virtual~MiniHCS(){};
     void onValidate(const std::string& doc_id, const std::string& json_body) {
-        printf("MiniHCS: New incoming revision: Doc Id: %s, Doc body: %s\n", doc_id.c_str(), json_body.c_str() );
+        qC4Debug(logDomainSGExample, "MiniHCS: New incoming revision: Doc Id: %s, Doc body: %s", doc_id.c_str(), json_body.c_str() );
         SGDocument document(db_, doc_id);
-        printf("MiniHCS: existing revision: Doc Id: %s, Doc body: %s\n", doc_id.c_str(), document.getBody().c_str() );
+        qC4Debug(logDomainSGExample, "MiniHCS: existing revision: Doc Id: %s, Doc body: %s", doc_id.c_str(), document.getBody().c_str() );
     }
 
 private:
     SGDatabase *db_;
 };
 
-int main(){
+int main()
+{
     // Default db location will be current location
     SGDatabase sgDatabase("db2");
 
-    DEBUG("Database will be stored in: %s\n", sgDatabase.getDBPath().c_str());
+    qC4Info(logDomainSGExample, "Database will be stored in: '%s'", sgDatabase.getDBPath().c_str());
 
     if (!sgDatabase.isOpen()) {
-        DEBUG("Db is not open yet\n");
+        qC4Debug(logDomainSGExample, "Db is not open yet");
     }
 
     if (sgDatabase.open() != SGDatabaseReturnStatus::kNoError) {
-        DEBUG("Can't open DB!\n");
+        qC4Critical(logDomainSGExample, "Can't open DB!");
         return 1;
     }
 
     if (sgDatabase.isOpen()) {
-        DEBUG("DB is open using isOpen API\n");
+        qC4Info(logDomainSGExample, "DB is open using isOpen API");
     } else {
-        DEBUG("DB is not open, exiting!\n");
+        qC4Critical(logDomainSGExample, "DB is not open, exiting!");
         return 1;
     }
 
     vector<string> document_keys;
     if(!sgDatabase.getAllDocumentsKey(document_keys)){
-        DEBUG("Failed to run getAllDocumentsKey()\n");
+        qC4Critical(logDomainSGExample, "Failed to run getAllDocumentsKey()");
         return 1;
     }
 
     // Printing the list of documents key from the local DB.
     for(std::vector <string>::iterator iter = document_keys.begin(); iter != document_keys.end(); iter++)
     {
-        DEBUG("Document Key: %s\n", (*iter).c_str());
+        qC4Info(logDomainSGExample, "Document Key: %s", (*iter).c_str());
     }
 
     SGMutableDocument newdoc(&sgDatabase, "custom_doc");
 
     // This is not a valid json.
     if( !newdoc.setBody("fdfd") ){
-        DEBUG("The body is not set! fdfd is not a valid json\n");
+        qC4Debug(logDomainSGExample, "The body is not set! fdfd is not a valid json");
     }
 
     // This is a valid json.
     std::string json_data = R"foo({"age":100,"myobj":{"myarray":[1,2,3,4],"mykey":"myvalue"},"name":"luay"})foo";
     if( newdoc.setBody(json_data) ){
-        DEBUG("json_data is a valid json\n");
+        qC4Debug(logDomainSGExample, "json_data is a valid json");
     }
 
     if(sgDatabase.save(&newdoc) != SGDatabaseReturnStatus::kNoError){
-        DEBUG("Could not save a doc after using setBody()\n");
+        qC4Critical(logDomainSGExample, "Could not save a doc after using setBody()");
         return 1;
     }
 
-    DEBUG("%s\n", newdoc.getBody().c_str());
+    qC4Info(logDomainSGExample, "%s", newdoc.getBody().c_str());
 
     if(json_data.compare(newdoc.getBody()) != 0){
-        DEBUG("Doc body does not match the original json string used to set the body\n");
+        qC4Critical(logDomainSGExample, "Doc body does not match the original json string used to set the body");
         return 1;
     }
     
     SGMutableDocument usbPDDocument(&sgDatabase, "usb-pd-document");
 
 
-    DEBUG("document Id: %s, body: %s\n", usbPDDocument.getId().c_str(), usbPDDocument.getBody().c_str());
+    qC4Info(logDomainSGExample, "document Id: %s, body: %s", usbPDDocument.getId().c_str(), usbPDDocument.getBody().c_str());
 
     usbPDDocument.set("number", 30);
     usbPDDocument.set("name", "hello"_sl);
@@ -142,13 +143,13 @@ int main(){
 
             string name_string = name_value->toString().asString();
 
-            DEBUG("name:%s\n", name_string.c_str());
+            qC4Debug(logDomainSGExample, "name:%s", name_string.c_str());
         }else{
-            DEBUG("name_value is not a string!\n");
+            qC4Warning(logDomainSGExample, "name_value is not a string!");
         }
 
     }else{
-        DEBUG("There is no such key called: %s\n", name_key.c_str());
+        qC4Warning(logDomainSGExample, "There is no such key called: %s", name_key.c_str());
     }
 
     sgDatabase.save(&usbPDDocument);
@@ -161,7 +162,7 @@ int main(){
         if(whatever_value_key->type() == kNumber){
             usbPDDocument.set(whatever_key, usbPDDocument.get(whatever_key)->asInt() + 1);
         }else{
-            DEBUG("Warning: No such key:%s exist\n",whatever_key.c_str());
+            qC4Warning(logDomainSGExample, "Warning: No such key:%s exist",whatever_key.c_str());
         }
     }else{
         usbPDDocument.set(whatever_key, 0);
@@ -169,7 +170,7 @@ int main(){
 
     sgDatabase.save(&usbPDDocument);
 
-    DEBUG("Document Body after save: %s\n", usbPDDocument.getBody().c_str());
+    qC4Info(logDomainSGExample, "Document Body after save: %s", usbPDDocument.getBody().c_str());
 
 
     // Bellow Replicator API
@@ -177,15 +178,15 @@ int main(){
     SGURLEndpoint url_endpoint(my_url);
 
     if(url_endpoint.init()){
-        DEBUG("url_endpoint is valid \n");
+        qC4Debug(logDomainSGExample, "url_endpoint is valid ");
     }else{
-        DEBUG("Invalid url_endpoint\n");
+        qC4Critical(logDomainSGExample, "Invalid url_endpoint");
         return 1;
     }
 
-    DEBUG("host %s, \n", url_endpoint.getHost().c_str());
-    DEBUG("schema %s, \n", url_endpoint.getSchema().c_str());
-    DEBUG("getPath %s, \n", url_endpoint.getPath().c_str());
+    qC4Debug(logDomainSGExample, "host %s,", url_endpoint.getHost().c_str());
+    qC4Debug(logDomainSGExample, "schema %s,", url_endpoint.getSchema().c_str());
+    qC4Debug(logDomainSGExample, "getPath %s,", url_endpoint.getPath().c_str());
 
     SGReplicatorConfiguration replicator_configuration(&sgDatabase, &url_endpoint);
 
@@ -209,9 +210,10 @@ int main(){
 
 
     if(replicator.start() != SGReplicatorReturnStatus::kNoError){
-        DEBUG("Could not start the replicator!\n");
+        qC4Critical(logDomainSGExample, "Could not start the replicator!");
         return 1;
     }
+    qC4Info(logDomainSGExample, "Started replicator");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
 
@@ -219,18 +221,20 @@ int main(){
     replicator_configuration.setChannels(channels);
 
     // Restart the replicator so that the configuration changes come into effect
-    DEBUG("About to restart the replicator with different channels\n");
+    qC4Debug(logDomainSGExample, "About to restart the replicator with different channels");
     replicator.restart();
 
-    DEBUG("About to stop the replicator thread\n");
+    qC4Debug(logDomainSGExample, "About to stop the replicator thread");
     this_thread::sleep_for(chrono::milliseconds(1000));
 
     replicator.stop();
+    replicator.join();
+
     channels = {"random_channel_name"};
     replicator_configuration.setChannels(channels);
-    this_thread::sleep_for(chrono::milliseconds(5000));
+    this_thread::sleep_for(chrono::milliseconds(1000));
 
-    DEBUG("End of demo.\n");
+    qC4Info(logDomainSGExample, "End of demo.");
 
     return 0;
 }

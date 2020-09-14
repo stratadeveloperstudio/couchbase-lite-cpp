@@ -1,5 +1,5 @@
 //
-//  SGLoggingC4Categories.h
+//  sgloggingcategories.h
 //
 //  Copyright 2014 ON Semiconductor.
 //  All rights reserved. This software and/or documentation is licensed by ON Semiconductor under
@@ -26,10 +26,5 @@
 #include "SGLogging.h"
 
 namespace Strata {
-    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGDatabase)
-    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGDocument)
-    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGMutableDocument)
-    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGPath)
-    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGReplicator)
-    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGURLEndpoint)
+    Q_DECLARE_C4_LOGGING_CATEGORY(logDomainSGExample)
 }

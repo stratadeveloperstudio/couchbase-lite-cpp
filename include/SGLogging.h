@@ -30,28 +30,20 @@
 #define Q_DECLARE_C4_LOGGING_CATEGORY(name) \
     extern C4LogDomain &name();
 
-#define Q_C4_LOGGING_CATEGORY(name, ...) \
+#define Q_C4_LOGGING_CATEGORY(name, logName) \
     C4LogDomain &name() \
     { \
-        static litecore::LogDomain logdomain(__VA_ARGS__, litecore::LogLevel::Debug); \
-        static C4LogDomain c4logdomain = (C4LogDomain)&logdomain; \
+        static C4LogDomain c4logdomain = [](){ \
+            static litecore::LogDomain logdomain(logName, litecore::LogLevel::Debug); \
+            logdomain.setCallbackLogLevel(litecore::LogLevel::Debug); \
+            return (C4LogDomain)&logdomain; \
+        } (); \
         return c4logdomain; \
     }
-
-#ifdef SHOW_DATABASE_MESSAGES
 
 #  define qC4Debug(category, FMT, ...) C4LogToAt(category(), kC4LogDebug,   FMT, ## __VA_ARGS__)
 #  define qC4Info(category, FMT, ...) C4LogToAt(category(), kC4LogInfo,   FMT, ## __VA_ARGS__)
 #  define qC4Warning(category, FMT, ...) C4LogToAt(category(), kC4LogWarning,   FMT, ## __VA_ARGS__)
 #  define qC4Critical(category, FMT, ...) C4LogToAt(category(), kC4LogError,   FMT, ## __VA_ARGS__)
-
-#else
-
-#  define qC4Debug(category, FMT, ...)
-#  define qC4Info(category, FMT, ...)
-#  define qC4Warning(category, FMT, ...)
-#  define qC4Critical(category, FMT, ...)
-
-#endif
 
 #endif //SGLOGGING_H
